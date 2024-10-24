@@ -17,7 +17,7 @@
       });
       const repeatDuration = ref(1);  // Number of weeks to repeat
       const selectedPerson = ref(null);
-      const events = ref([{ title: '100% 871 kr', date: '2024-10-15', color: 'red'}]);  // Holds generated events
+      const events = ref([{ title: '100% 871 kr', date: '2024-10-15', person: 'Richard'}]);  // Holds generated events
       const ratios = [
         { id: 1, ratio: '100' },
         { id: 2, ratio: '75' },
@@ -41,7 +41,12 @@
                 right: 'dayGridMonth,dayGridWeek,dayGridDay'
             },
             events: events.value,
-      }));
+            eventDidMount: (info) => {
+                // Add a class based on the event's person field
+                const personClass = `person-${info.event.extendedProps.person.toLowerCase()}`;
+                info.el.classList.add(personClass);
+            }
+        }));
 
     const onDatesSet = (dateInfo) => {
         // Logic for handling date changes
@@ -66,11 +71,14 @@
             const eventDate = new Date(startOfWeek);
             eventDate.setDate(eventDate.getDate() + index + week * 7); // Calculate the correct date for each day
 
-            events.value.push({
-                title: `${selectedPerson.value[0]} ${percentage}%`,
+            // Create the event object
+            const newEvent = {
+                title: `${selectedPerson.value.charAt(0)} ${percentage}%`,
                 start: eventDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
                 person: selectedPerson.value,
-                percentage});
+                percentage: percentage
+            };
+            events.value.push(newEvent);
           }
         });
       }
