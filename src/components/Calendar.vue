@@ -92,6 +92,11 @@
       }
     };
 
+    // Clear events from Local Storage and events ref
+    const clearCalendar = () => {
+      events.value = [];
+    }
+
     // Load events automatically when the component is mounted
     onMounted(() => {
       loadCalendar();
@@ -102,6 +107,7 @@
     <div>
         <button @click="saveCalendar">Save Calendar</button>
         <button @click="loadCalendar">Load Calendar</button>
+        <button @click="clearCalendar">Clear Calendar</button>
         <FullCalendar :options="calendarOptions" />
         <form @submit.prevent="generatePattern">
         <h3>Weekly Pattern</h3>
@@ -124,6 +130,7 @@
         <div v-if="events.length">
       <h3>Generated Events</h3>
       <ul>
+        {{ events }}
         <li v-for="event in events" :key="event.title">
           {{ event.title }} - {{ event.start }} ({{ event.percentage }}%)
         </li>
@@ -133,6 +140,16 @@
   </template>
   
   <style>
-  /* Add your styles here */
+  .person-richard {
+  background-color: #00BFFF !important;
+  border-color: #00BFFF !important;
+  color: white !important;
+}
+
+.person-linnea {
+  background-color: lightcoral !important;
+  border-color: lightcoral !important;
+  color: white !important;
+}
   </style>
   
