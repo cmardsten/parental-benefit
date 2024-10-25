@@ -16,7 +16,6 @@
         Sunday: "100",
       });
       const repeatDuration = ref(1);  // Number of weeks to repeat
-      const selectedPerson = ref(null);
       const events = ref([{ title: '100% 871 kr', date: '2024-10-15', person: 'Richard'}]);  // Holds generated events
       const ratios = [
         { id: 1, ratio: '100' },
@@ -27,9 +26,10 @@
         { id: 6, ratio: '0' },
     ];
       const persons = [
-        { id: 1, name: 'Richard' },
-        { id: 2, name: 'Linnea' },
+        { id: 1, name: 'Richard', salary: 39000 },
+        { id: 2, name: 'Linnea', salary: 36000 },
       ];
+      const selectedPerson = ref( persons[0] );
       
     const calendarOptions = computed(() => ({
             ...FullCalendar.options,
@@ -118,6 +118,13 @@
         <button @click="clearCalendar">Clear Calendar</button>
         <FullCalendar :options="calendarOptions" />
         <form @submit.prevent="generatePattern">
+        <!-- Person Selector -->
+        <label for="person">Select Person:</label>
+        <select v-model="selectedPerson">
+        <option v-for="person in persons" :key="person.id" :value="person">{{ person.name }}</option>
+        </select>
+        <label>Monthly salary:</label>
+        <input type="number" v-model="selectedPerson.salary"/>
         <h3>Weekly Pattern</h3>
         <div v-for="day in weekDays" :key="day">
         <label :for="day">{{ day }}</label>
@@ -128,11 +135,6 @@
         <!-- Repeat Duration -->
       <label for="repeatDuration">Repeat for (weeks):</label>
       <input type="number" v-model="repeatDuration" min="1" placeholder="Number of weeks" />
-        <!-- Person Selector -->
-        <label for="person">Select Person:</label>
-        <select v-model="selectedPerson">
-            <option v-for="person in persons" :key="person.id" :value="person.name">{{ person.name }}</option>
-         </select>
         <button type="submit">Generate Pattern</button>
         </form>
         <div v-if="events.length">
