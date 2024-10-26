@@ -7,16 +7,16 @@
 
       const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       var pattern = ref({
-        Monday: "100",
-        Tuesday: "100",
-        Wednesday: "100",
-        Thursday: "100",
-        Friday: "100",
-        Saturday: "100",
-        Sunday: "100",
+        Monday: { percentage: "100", isLowLevel: false },
+        Tuesday: { percentage: "100", isLowLevel: false },
+        Wednesday: { percentage: "100", isLowLevel: false },
+        Thursday: { percentage: "100", isLowLevel: false },
+        Friday: { percentage: "100", isLowLevel: false },
+        Saturday: { percentage: "100", isLowLevel: false },
+        Sunday: { percentage: "100", isLowLevel: false },
       });
       const repeatDuration = ref(1);  // Number of weeks to repeat
-      const events = ref([{ title: '100% 871 kr', date: '2024-10-15', person: 'Richard'}]);  // Holds generated events
+      const events = ref([{ title: '100% 871 kr', date: '2024-10-15', person: 'Richard', isLowLevel: true}]);  // Holds generated events
       const ratios = [
         { id: 1, ratio: '100' },
         { id: 2, ratio: '75' },
@@ -43,7 +43,11 @@
             events: events.value,
             eventDidMount: (info) => {
                 // Add a class based on the event's person field
-                const personClass = `person-${info.event.extendedProps.person.toLowerCase()}`;
+                var personClass = `person-${info.event.extendedProps.person.toLowerCase()}`;
+                if (info.event.extendedProps.isLowLevel == true)
+                {
+                    personClass = personClass.concat("-low");
+                }
                 info.el.classList.add(personClass);
             }
         }));
@@ -58,9 +62,17 @@
         console.log('Year view triggered');
     };
 
-    const calculateDayPay = (monthlySalary, percentage) => {
-        const adjustedSgi = 0.97 * 0.8 * 12 * monthlySalary;
-        const pay = (adjustedSgi / 365) * (percentage / 100);
+    const calculateDayPay = (monthlySalary, percentage, isLowLevelDay) => {
+        var pay = 0;
+        if (isLowLevelDay === true)
+        {
+            pay = 180 * percentage / 100;
+        }
+        else
+        {
+            const adjustedSgi = 0.97 * 0.8 * 12 * monthlySalary;
+            pay = (adjustedSgi / 365) * (percentage / 100);
+        }
         return pay;
     };
 
@@ -71,18 +83,25 @@
       // Loop over the number of weeks based on repeatDuration
       for (let week = 0; week < repeatDuration.value; week++) {
         weekDays.forEach((day, index) => {
-          const percentage = pattern.value[day];
+          const percentage = pattern.value[day].percentage;
           if (percentage > 0)
           {
             const eventDate = new Date(startOfWeek);
             eventDate.setDate(eventDate.getDate() + index + week * 7); // Calculate the correct date for each day
-            const pay = calculateDayPay(selectedPerson.value.salary, percentage);
+            const isLowLevel = pattern.value[day].isLowLevel;
+            const pay = calculateDayPay(selectedPerson.value.salary, percentage, isLowLevel);
+            var lowLevelString = "";
+            if (isLowLevel)
+            {
+                lowLevelString = " (L)"
+            }
             // Create the event object
             const newEvent = {
-                title: `${selectedPerson.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr`,
+                title: `${selectedPerson.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr${lowLevelString}`,
                 start: eventDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
                 person: selectedPerson.value.name,
                 percentage: percentage,
+                isLowLevel: isLowLevel,
                 pay: pay,
             };
             events.value.push(newEvent);
@@ -135,9 +154,13 @@
         <h3>Weekly Pattern</h3>
         <div v-for="day in weekDays" :key="day">
         <label :for="day">{{ day }}</label>
-        <select v-model="pattern[day]">
-        <option v-for="ratio in ratios" :key="ratio.id" :value="ratio.ratio">{{ ratio.ratio }}</option>
+        <select v-model="pattern[day].percentage">
+            <option v-for="ratio in ratios" :key="ratio.id" :value="ratio.ratio">{{ ratio.ratio }}</option>
         </select>
+        <label>
+            <input type="checkbox" v-model="pattern[day].isLowLevel" />
+            Low-level Day
+        </label>
         </div>
         <!-- Repeat Duration -->
       <label for="repeatDuration">Repeat for (weeks):</label>
@@ -157,8 +180,21 @@
   </template>
   
   <style>
-  .person-richard {
+
+.person-richard {
   background-color: #00BFFF !important;
+  border-color: #00BFFF !important;
+  color: white !important;
+}
+
+.person-richard-low {
+  background: repeating-linear-gradient(
+    45deg,
+    #00BFFF,
+    #00BFFF 8px,
+    #22DFFF 8px,
+    #22DFFF 16px
+    );
   border-color: #00BFFF !important;
   color: white !important;
 }
@@ -168,5 +204,19 @@
   border-color: lightcoral !important;
   color: white !important;
 }
+
+.person-linnea-low {
+  background: repeating-linear-gradient(
+    45deg,
+    lightcoral,
+    lightcoral 8px,
+    #F4A4A4 8px,
+    #F4A4A4 16px
+    );
+  border-color: lightcoral !important;
+  color: white !important;
+}
+
+
   </style>
   
