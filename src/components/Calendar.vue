@@ -58,6 +58,12 @@
         console.log('Year view triggered');
     };
 
+    const calculateDayPay = (monthlySalary, percentage) => {
+        const adjustedSgi = 0.97 * 0.8 * 12 * monthlySalary;
+        const pay = (adjustedSgi / 365) * (percentage / 100);
+        return pay;
+    };
+
     const generatePattern = () => {
       const today = new Date();
       const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1)); // Start of the week (Monday)
@@ -70,13 +76,14 @@
           {
             const eventDate = new Date(startOfWeek);
             eventDate.setDate(eventDate.getDate() + index + week * 7); // Calculate the correct date for each day
-
+            const pay = calculateDayPay(selectedPerson.value.salary, percentage);
             // Create the event object
             const newEvent = {
-                title: `${selectedPerson.value.charAt(0)} ${percentage}%`,
+                title: `${selectedPerson.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr`,
                 start: eventDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
-                person: selectedPerson.value,
-                percentage: percentage
+                person: selectedPerson.value.name,
+                percentage: percentage,
+                pay: pay,
             };
             events.value.push(newEvent);
           }
