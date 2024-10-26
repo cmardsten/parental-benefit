@@ -52,6 +52,17 @@
             }
         }));
 
+    // Compute total pay for each person
+    const totalPay = computed(() => {
+        const totals = {};
+        persons.forEach(person => {
+            totals[person.name] = events.value
+            .filter(event => event.person === person.name)
+            .reduce((sum, event) => sum + event.pay, 0);
+        });
+        return totals;
+    });
+
     const onDatesSet = (dateInfo) => {
         // Logic for handling date changes
         console.log('Current date range:', dateInfo.start, dateInfo.end);
@@ -138,48 +149,97 @@
   </script>
 
 <template>
-    <div>
-        <button @click="saveCalendar">Save Calendar</button>
-        <button @click="loadCalendar">Load Calendar</button>
-        <button @click="clearCalendar">Clear Calendar</button>
-        <FullCalendar :options="calendarOptions" />
-        <form @submit.prevent="generatePattern">
-        <!-- Person Selector -->
-        <label for="person">Select Person:</label>
-        <select v-model="selectedPerson">
-        <option v-for="person in persons" :key="person.id" :value="person">{{ person.name }}</option>
-        </select>
-        <label>Monthly salary:</label>
-        <input type="number" v-model="selectedPerson.salary"/>
-        <h3>Weekly Pattern</h3>
-        <div v-for="day in weekDays" :key="day">
-        <label :for="day">{{ day }}</label>
-        <select v-model="pattern[day].percentage">
-            <option v-for="ratio in ratios" :key="ratio.id" :value="ratio.ratio">{{ ratio.ratio }}</option>
-        </select>
-        <label>
-            <input type="checkbox" v-model="pattern[day].isLowLevel" />
-            Low-level Day
-        </label>
+    <button @click="saveCalendar">Save Calendar</button>
+    <button @click="loadCalendar">Load Calendar</button>
+    <button @click="clearCalendar">Clear Calendar</button>
+    <div class="main-container">
+        <div class="left-section">
+            <div class="calendar">
+            <FullCalendar :options="calendarOptions" />
+            </div>
+            <div class="settings-form">
+                <form @submit.prevent="generatePattern">
+                    <!-- Person Selector -->
+                    <label for="person">Select Person:</label>
+                    <select v-model="selectedPerson">
+                    <option v-for="person in persons" :key="person.id" :value="person">{{ person.name }}</option>
+                    </select>
+                    <label>Monthly salary:</label>
+                    <input type="number" v-model="selectedPerson.salary"/>
+                    <h3>Weekly Pattern</h3>
+                    <div v-for="day in weekDays" :key="day">
+                    <label :for="day">{{ day }}</label>
+                    <select v-model="pattern[day].percentage">
+                        <option v-for="ratio in ratios" :key="ratio.id" :value="ratio.ratio">{{ ratio.ratio }}</option>
+                    </select>
+                    <label>
+                        <input type="checkbox" v-model="pattern[day].isLowLevel" />
+                        Low-level Day
+                    </label>
+                    </div>
+                    <!-- Repeat Duration -->
+                    <label for="repeatDuration">Repeat for (weeks):</label>
+                    <input type="number" v-model="repeatDuration" min="1" placeholder="Number of weeks" />
+                    <button type="submit">Generate Pattern</button>
+                </form>
+                <div v-if="events.length">
+                <h3>Generated Events</h3>
+                <ul>
+                    {{ events }}
+                    <li v-for="event in events" :key="event.title">
+                    {{ event.title }} - {{ event.start }} ({{ event.percentage }}%)
+                    </li>
+                </ul>
+                </div>
+            </div>
         </div>
-        <!-- Repeat Duration -->
-      <label for="repeatDuration">Repeat for (weeks):</label>
-      <input type="number" v-model="repeatDuration" min="1" placeholder="Number of weeks" />
-        <button type="submit">Generate Pattern</button>
-        </form>
-        <div v-if="events.length">
-      <h3>Generated Events</h3>
-      <ul>
-        {{ events }}
-        <li v-for="event in events" :key="event.title">
-          {{ event.title }} - {{ event.start }} ({{ event.percentage }}%)
-        </li>
-      </ul>
+
+        <!-- Information Box -->
+        <div class="summary-box">
+            <h3>Total Pay</h3>
+            <ul>
+                <li v-for="person in persons" :key="person.id">
+                {{ person.name }}: {{ totalPay[person.name].toFixed(0) }} kr
+                </li>
+            </ul>
+        </div>
     </div>
-    </div>
-  </template>
+</template>
   
-  <style>
+<style>
+
+.main-container {
+  display: flex;
+  gap: 20px;
+}
+
+.left-section {
+  display: flex;
+  flex-direction: column;
+  flex: 3;
+  gap: 20px;
+}
+
+.calendar {
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.settings-form {
+  border: 1px solid #ddd;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.summary-box {
+  align-self: flex-start;
+  border: 1px solid #ddd;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
 
 .person-richard {
   background-color: #00BFFF !important;
@@ -218,5 +278,5 @@
 }
 
 
-  </style>
+</style>
   

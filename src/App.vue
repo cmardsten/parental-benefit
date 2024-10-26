@@ -13,8 +13,4 @@ import Calendar from './components/Calendar.vue';
 
 <style>
   /* Global styles */
-  #calendar-div {
-    width: 60%;
-    height: 40rem;
-  }
 </style>
