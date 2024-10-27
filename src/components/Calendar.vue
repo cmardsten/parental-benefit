@@ -1,5 +1,5 @@
   <script setup>
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, onMounted, watch} from 'vue';
   import FullCalendar from '@fullcalendar/vue3';
   import dayGridPlugin from '@fullcalendar/daygrid';
   import interactionPlugin from '@fullcalendar/interaction';
@@ -15,8 +15,26 @@
         Saturday: { percentage: "100", isLowLevel: false },
         Sunday: { percentage: "100", isLowLevel: false },
       });
-      const repeatDuration = ref(1);  // Number of weeks to repeat
-      const startDate = ref(new Date().toISOString().substring(0, 10))
+      const repeatDuration = ref(8);  // Number of weeks to repeat
+      const today = new Date();
+      var todayPlusEightWeeks = new Date();
+      todayPlusEightWeeks.setDate(todayPlusEightWeeks.getDate() + 8 * 7);
+      const startDate = ref(today.toISOString().substring(0, 10));
+      const endDate = ref(todayPlusEightWeeks.toISOString().substring(0, 10));
+
+    // Watch repeatDuration to update endDate
+    watch(repeatDuration, (newWeeks) => {
+        const newEndDate = new Date(startDate.value);
+        newEndDate.setDate(newEndDate.getDate() + newWeeks * 7);
+        endDate.value = newEndDate.toISOString().substring(0, 10);
+    });
+
+    // Watch endDate to update repeatDuration
+    watch(endDate, (newEndDate) => {
+        const timeDifference = new Date(newEndDate) - new Date(startDate.value);
+        repeatDuration.value = Math.floor(timeDifference / (1000 * 60 * 60 * 24 * 7)); // Convert ms to weeks
+    });
+
       const events = ref([{ title: '100% 871 kr', date: '2024-10-15', person: 'Richard', isLowLevel: true}]);  // Holds generated events
       const ratios = [
         { id: 1, ratio: '100' },
@@ -180,8 +198,18 @@
                         <input type="date" v-model="startDate"/>
                     </div>
                     <div>
-                        <label for="repeatDuration">Repeat for (weeks):</label>
-                        <input type="number" v-model="repeatDuration" min="1" placeholder="Number of weeks" />
+                        <label for="endDate">End date:</label>
+                        <input type="date" v-model="endDate"/>
+                        <span>
+                        (
+                            <input type="number"
+                                v-model="repeatDuration"
+                                placeholder="Number of weeks"
+                                min=0
+                                style="width: 2.5em;"/>
+                            <label for="repeatDuration">weeks</label>
+                        )
+                        </span>
                     </div>
                     <button type="submit">Generate Pattern</button>
                 </form>
@@ -280,6 +308,10 @@
   color: white !important;
 }
 
+input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;}
 
 </style>
   
