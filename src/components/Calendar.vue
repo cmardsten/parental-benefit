@@ -16,6 +16,7 @@
         Sunday: { percentage: "100", isLowLevel: false },
       });
       const repeatDuration = ref(1);  // Number of weeks to repeat
+      const startDate = ref(new Date().toISOString().substring(0, 10))
       const events = ref([{ title: '100% 871 kr', date: '2024-10-15', person: 'Richard', isLowLevel: true}]);  // Holds generated events
       const ratios = [
         { id: 1, ratio: '100' },
@@ -88,16 +89,12 @@
     };
 
     const generatePattern = () => {
-      const today = new Date();
-      const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1)); // Start of the week (Monday)
-      
-      // Loop over the number of weeks based on repeatDuration
       for (let week = 0; week < repeatDuration.value; week++) {
         weekDays.forEach((day, index) => {
           const percentage = pattern.value[day].percentage;
           if (percentage > 0)
           {
-            const eventDate = new Date(startOfWeek);
+            const eventDate = new Date(startDate.value);
             eventDate.setDate(eventDate.getDate() + index + week * 7); // Calculate the correct date for each day
             const isLowLevel = pattern.value[day].isLowLevel;
             const pay = calculateDayPay(selectedPerson.value.salary, percentage, isLowLevel);
@@ -178,8 +175,14 @@
                     </label>
                     </div>
                     <!-- Repeat Duration -->
-                    <label for="repeatDuration">Repeat for (weeks):</label>
-                    <input type="number" v-model="repeatDuration" min="1" placeholder="Number of weeks" />
+                    <div>
+                        <label for="startDate">Start date:</label>
+                        <input type="date" v-model="startDate"/>
+                    </div>
+                    <div>
+                        <label for="repeatDuration">Repeat for (weeks):</label>
+                        <input type="number" v-model="repeatDuration" min="1" placeholder="Number of weeks" />
+                    </div>
                     <button type="submit">Generate Pattern</button>
                 </form>
                 <div v-if="events.length">
