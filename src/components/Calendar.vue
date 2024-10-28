@@ -4,6 +4,70 @@
   import dayGridPlugin from '@fullcalendar/daygrid';
   import interactionPlugin from '@fullcalendar/interaction';
 
+  const activeTab = ref('child');
+
+  const today = new Date();
+  const newChild = ref({
+        name: "",
+        birthdate: today.toISOString().substring(0, 10),
+        parentalLeaveDays: {
+                mother: {
+                    transferable: {
+                        low: 45,
+                        high: 105
+                    },
+                    reserved: 90,
+                },
+                father: {
+                    transferable: {
+                        low: 45,
+                        high: 105
+                    },
+                    reserved: 90,
+                }
+            }
+        });
+
+  // Track the total remaining days for each parent across all children
+  const totalRemainingDays = computed(() => {
+  return children.value.reduce(
+    (totals, child) => {
+      totals.mother.high += child.parentalLeaveDays.mother.transferable.high + child.parentalLeaveDays.mother.reserved;
+      totals.mother.low += child.parentalLeaveDays.mother.transferable.low;
+      totals.father.high += child.parentalLeaveDays.father.transferable.high + child.parentalLeaveDays.father.reserved;
+      totals.father.low += child.parentalLeaveDays.father.transferable.low;
+      return totals;
+    },
+    { mother: { high: 0, low: 0 }, father: { high: 0, low: 0 } }
+    );
+    });
+
+// Computed property to calculate remaining days for each child
+const childrenWithRemainingDays = computed(() =>
+  children.value.map(child => {
+    const { mother, father } = child.parentalLeaveDays;
+
+    const totalHigh =
+      mother.transferable.high +
+      mother.reserved +
+      father.transferable.high +
+      father.reserved;
+
+    const totalLow =
+      mother.transferable.low +
+      father.transferable.low;
+
+    return {
+      ...child,
+      remainingDays: {
+        high: totalHigh,
+        low: totalLow,
+      },
+    };
+  })
+);
+
+  const children = ref([]);
 
       const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       var pattern = ref({
@@ -16,7 +80,6 @@
         Sunday: { percentage: "100", isLowLevel: false },
       });
       const repeatDuration = ref(8);  // Number of weeks to repeat
-      const today = new Date();
       var todayPlusEightWeeks = new Date();
       todayPlusEightWeeks.setDate(todayPlusEightWeeks.getDate() + 8 * 7);
       const startDate = ref(today.toISOString().substring(0, 10));
@@ -45,8 +108,8 @@
         { id: 6, ratio: '0' },
     ];
       const persons = [
-        { id: 1, name: 'Richard', salary: 39000 },
-        { id: 2, name: 'Linnea', salary: 36000 },
+        { id: 1, name: 'Richard', parent: 'father', salary: 39000 },
+        { id: 2, name: 'Linnea', parent: 'mother', salary: 36000 },
       ];
       const selectedPerson = ref( persons[0] );
       
@@ -121,6 +184,34 @@
             {
                 lowLevelString = " (L)"
             }
+
+            const child = children.value[0];
+            const parent = selectedPerson.value.parent;
+            const dayType = isLowLevel ? "low" : "high";
+            // Subtract a day from the specified parent and day type
+            if (isLowLevel)
+            {
+                if (child.parentalLeaveDays[parent].transferable.low > 0)
+                {
+                    child.parentalLeaveDays[parent].transferable.low--;
+                }
+                else
+                {
+                    alert("No low days left. You need to transfer days.");
+                }
+            }
+            else
+            {
+                if (child.parentalLeaveDays[parent].reserved > 0)
+                {
+                    child.parentalLeaveDays[parent].reserved--;
+                }
+                else if (child.parentalLeaveDays[parent].transferable.high > 0)
+                {
+                    child.parentalLeaveDays[parent].transferable.high--;
+                }
+            }
+
             // Create the event object
             const newEvent = {
                 title: `${selectedPerson.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr${lowLevelString}`,
@@ -138,6 +229,7 @@
 
     const saveCalendar = () => {
       localStorage.setItem('savedEvents', JSON.stringify(events.value));
+      localStorage.setItem('savedChildren', JSON.stringify(children.value));
       alert('Calendar events saved!');
     };
 
@@ -146,15 +238,21 @@
       const savedEvents = localStorage.getItem('savedEvents');
       if (savedEvents) {
         events.value = JSON.parse(savedEvents);
-        alert('Calendar events loaded!');
-      } else {
-        alert('No saved calendar found.');
+      };
+      const savedChildren = localStorage.getItem('savedChildren');
+      if (savedChildren)
+      {
+        children.value = JSON.parse(savedChildren);
       }
     };
 
     // Clear events from Local Storage and events ref
     const clearCalendar = () => {
       events.value = [];
+    }
+
+    const addChild = () => {
+        children.value.push(newChild.value);
     }
 
     // Load events automatically when the component is mounted
@@ -172,7 +270,11 @@
             <div class="calendar">
             <FullCalendar :options="calendarOptions" />
             </div>
-            <div class="settings-form">
+            <div class="tabs">
+                <button @click="activeTab = 'pattern'">Pattern Settings</button>
+                <button @click="activeTab = 'child'">Children</button>
+            </div>
+            <div v-if="activeTab === 'pattern'" class="settings-form">
                 <form @submit.prevent="generatePattern">
                     <!-- Person Selector -->
                     <label for="person">Select Person:</label>
@@ -234,16 +336,39 @@
                 </ul>
                 </div>
             </div>
+
+
+
+            <div v-if="activeTab === 'child'" class="settings-form">
+                <h2>Children</h2>
+                <div v-if=children>
+                    <div v-for="child in childrenWithRemainingDays" :key="child.name">
+                        <h4>{{ child.birthdate }} : {{ child.name }}</h4>
+                        <p>Sickness Benefit Level Days Left: {{ child.remainingDays.high }}</p>
+                        <p>Low Level Days Left: {{ child.remainingDays.low }}</p>
+                    </div>
+                </div>
+                <h3>Add child</h3>
+                <label for="childName">Child's Name:</label>
+                <input type="text" v-model="newChild.name" placeholder="Enter child's name" />
+
+                <label for="birthdate">Birthdate:</label>
+                <input type="date" v-model="newChild.birthdate" />
+
+                <button @click="addChild">Add Child</button>
+            </div>
         </div>
 
         <!-- Information Box -->
         <div class="summary-box">
-            <h3>Total Pay</h3>
-            <ul>
-                <li v-for="person in persons" :key="person.id">
+            <h3>Total pay</h3>
+            <p v-for="person in persons" :key="person.id">
                 {{ person.name }}: {{ totalPay[person.name].toFixed(0) }} kr
-                </li>
-            </ul>
+            </p>
+            <h3>Days left</h3>
+            <p v-for="person in persons" :key="person.id">
+                {{ person.name }}: H {{ totalRemainingDays[person.parent].high }} L {{ totalRemainingDays[person.parent].low }}
+            </p>
         </div>
     </div>
 </template>
