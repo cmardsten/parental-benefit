@@ -182,35 +182,46 @@
                     <label>Monthly salary:</label>
                     <input type="number" v-model="selectedPerson.salary"/>
                     <h3>Weekly Pattern</h3>
-                    <div v-for="day in weekDays" :key="day">
-                    <label :for="day">{{ day }}</label>
-                    <select v-model="pattern[day].percentage">
-                        <option v-for="ratio in ratios" :key="ratio.id" :value="ratio.ratio">{{ ratio.ratio }}</option>
-                    </select>
-                    <label>
-                        <input type="checkbox" v-model="pattern[day].isLowLevel" />
-                        Low-level Day
-                    </label>
-                    </div>
+                    <table class="pattern-table">
+                    <tr v-for="day in weekDays" :key="day">
+                    <td>{{ day }}</td>
+                    <td class="pattern-table-right">
+                        <select v-model="pattern[day].percentage">
+                        <option v-for="ratio in ratios" :key="ratio.id" :value="ratio.ratio">{{ ratio.ratio }}%</option>
+                        </select>
+                        <div class="low-level-checkbox">
+                            <input type="checkbox" v-model="pattern[day].isLowLevel" />
+                            <label>Low-Level Day</label>
+                        </div>
+                    </td>
+                    </tr>
                     <!-- Repeat Duration -->
-                    <div>
-                        <label for="startDate">Start date:</label>
+                    <tr>
+                    <td>
+                        <label for="startDate">Start date</label>
+                    </td>
+                    <td>
                         <input type="date" v-model="startDate"/>
-                    </div>
-                    <div>
-                        <label for="endDate">End date:</label>
+                    </td>   
+                    </tr>
+                    <tr>
+                    <td>
+                        <label for="endDate">End date</label>
+                    </td>
+                    <td>
                         <input type="date" v-model="endDate"/>
                         <span>
-                        (
+                        =
                             <input type="number"
                                 v-model="repeatDuration"
                                 placeholder="Number of weeks"
                                 min=0
                                 style="width: 2.5em;"/>
                             <label for="repeatDuration">weeks</label>
-                        )
                         </span>
-                    </div>
+                    </td>
+                    </tr>
+                    </table>
                     <button type="submit">Generate Pattern</button>
                 </form>
                 <div v-if="events.length">
@@ -270,6 +281,16 @@
   padding: 15px;
   background-color: #f9f9f9;
   border-radius: 8px;
+}
+
+.pattern-table-right {
+    display: flex;
+    gap: 20px;
+}
+
+.low-level-checkbox {
+  display: flex;
+  gap: 5px; /* Space between checkbox and label */
 }
 
 .person-richard {
