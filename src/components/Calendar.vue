@@ -1,5 +1,5 @@
   <script setup>
-  import { ref, computed, onMounted, watch} from 'vue';
+  import { ref, computed, onMounted } from 'vue';
   import FullCalendar from '@fullcalendar/vue3';
   import dayGridPlugin from '@fullcalendar/daygrid';
   import interactionPlugin from '@fullcalendar/interaction';
@@ -85,18 +85,28 @@ const childrenWithRemainingDays = computed(() =>
       const startDate = ref(today.toISOString().substring(0, 10));
       const endDate = ref(todayPlusEightWeeks.toISOString().substring(0, 10));
 
-    // Watch repeatDuration to update endDate
-    watch(repeatDuration, (newWeeks) => {
-        const newEndDate = new Date(startDate.value);
-        newEndDate.setDate(newEndDate.getDate() + newWeeks * 7);
-        endDate.value = newEndDate.toISOString().substring(0, 10);
-    });
+    const calculateEndDate = (start, weeks) => {
+    const calculatedDate = new Date(start);
+    calculatedDate.setDate(calculatedDate.getDate() + weeks * 7);
+    return calculatedDate.toISOString().substring(0, 10);
+    }
 
-    // Watch endDate to update repeatDuration
-    watch(endDate, (newEndDate) => {
-        const timeDifference = new Date(newEndDate) - new Date(startDate.value);
-        repeatDuration.value = Math.floor(timeDifference / (1000 * 60 * 60 * 24 * 7)); // Convert ms to weeks
-    });
+    function calculateRepeatDuration(start, end) {
+        const timeDifference = new Date(end) - new Date(start);
+        return Math.floor(timeDifference / (1000 * 60 * 60 * 24 * 7)); // Convert ms to weeks
+    }
+
+    const updateDates = (field, value) => {
+        if (field === 'repeatDuration') {
+            // Update endDate based on repeatDuration
+            repeatDuration.value = value;
+            endDate.value = calculateEndDate(startDate.value, repeatDuration.value);
+        } else if (field === 'endDate') {
+            // Update repeatDuration based on endDate
+            endDate.value = value;
+            repeatDuration.value = calculateRepeatDuration(startDate.value, endDate.value);
+        }
+    }
 
       const events = ref([{ title: '100% 871 kr', date: '2024-10-15', person: 'Richard', isLowLevel: true}]);  // Holds generated events
       const ratios = [
@@ -311,11 +321,14 @@ const childrenWithRemainingDays = computed(() =>
                         <label for="endDate">End date</label>
                     </td>
                     <td>
-                        <input type="date" v-model="endDate"/>
+                        <input type="date"
+                        v-model="endDate"
+                        @input="updateDates('endDate', $event.target.value)"/>
                         <span>
                         =
                             <input type="number"
                                 v-model="repeatDuration"
+                                @input="updateDates('repeatDuration', $event.target.value)"
                                 placeholder="Number of weeks"
                                 min=0
                                 style="width: 2.5em;"/>
