@@ -4,7 +4,7 @@
   import dayGridPlugin from '@fullcalendar/daygrid';
   import interactionPlugin from '@fullcalendar/interaction';
 
-  const activeTab = ref('child');
+  const activeTab = ref('pattern');
 
   const today = new Date();
   const newChild = ref({
