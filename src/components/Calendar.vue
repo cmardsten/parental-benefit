@@ -199,12 +199,13 @@ const childrenWithRemainingDays = computed(() =>
             const child = children.value[0];
             const parent = selectedPerson.value.parent;
             const dayType = isLowLevel ? "low" : "high";
+            const decimalDay = percentage / 100;
             // Subtract a day from the specified parent and day type
             if (isLowLevel)
             {
-                if (child.parentalLeaveDays[parent].transferable.low > 0)
+                if (child.parentalLeaveDays[parent].transferable.low >= decimalDay)
                 {
-                    child.parentalLeaveDays[parent].transferable.low--;
+                    child.parentalLeaveDays[parent].transferable.low -= decimalDay;
                 }
                 else
                 {
@@ -213,13 +214,13 @@ const childrenWithRemainingDays = computed(() =>
             }
             else
             {
-                if (child.parentalLeaveDays[parent].reserved > 0)
+                if (child.parentalLeaveDays[parent].reserved >= decimalDay)
                 {
-                    child.parentalLeaveDays[parent].reserved--;
+                    child.parentalLeaveDays[parent].reserved -= decimalDay;
                 }
-                else if (child.parentalLeaveDays[parent].transferable.high > 0)
+                else if (child.parentalLeaveDays[parent].transferable.high >= decimalDay)
                 {
-                    child.parentalLeaveDays[parent].transferable.high--;
+                    child.parentalLeaveDays[parent].transferable.high -= decimalDay;
                 }
             }
 
