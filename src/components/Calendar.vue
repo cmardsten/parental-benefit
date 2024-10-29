@@ -86,9 +86,9 @@ const childrenWithRemainingDays = computed(() =>
       const endDate = ref(todayPlusEightWeeks.toISOString().substring(0, 10));
 
     const calculateEndDate = (start, weeks) => {
-    const calculatedDate = new Date(start);
-    calculatedDate.setDate(calculatedDate.getDate() + weeks * 7);
-    return calculatedDate.toISOString().substring(0, 10);
+        const calculatedDate = new Date(start);
+        calculatedDate.setDate(calculatedDate.getDate() + weeks * 7);
+        return calculatedDate.toISOString().substring(0, 10);
     }
 
     function calculateRepeatDuration(start, end) {
@@ -315,7 +315,7 @@ const childrenWithRemainingDays = computed(() =>
                     </td>
                     <td>
                         <input type="date"
-                        v-model="startDate"
+                        :value="startDate"
                         @input="updateDates('startDate', $event.target.value)"/>
                     </td>   
                     </tr>
@@ -325,12 +325,12 @@ const childrenWithRemainingDays = computed(() =>
                     </td>
                     <td>
                         <input type="date"
-                        v-model="endDate"
+                        :value="endDate"
                         @input="updateDates('endDate', $event.target.value)"/>
                         <span>
                         =
                             <input type="number"
-                                v-model="repeatDuration"
+                                :value="repeatDuration"
                                 @input="updateDates('repeatDuration', $event.target.value)"
                                 placeholder="Number of weeks"
                                 min=0
