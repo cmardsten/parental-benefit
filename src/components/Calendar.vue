@@ -109,7 +109,7 @@ const childrenWithRemainingDays = computed(() =>
         }
     }
 
-      const events = ref([{ title: '100% 871 kr', date: '2024-10-15', person: 'Richard', isLowLevel: true}]);  // Holds generated events
+      const events = ref([]);  // Holds generated events
       const ratios = [
         { id: 1, ratio: '100' },
         { id: 2, ratio: '75' },
