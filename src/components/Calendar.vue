@@ -98,12 +98,13 @@ const childrenWithRemainingDays = computed(() =>
 
     const updateDates = (field, value) => {
         if (field === 'repeatDuration') {
-            // Update endDate based on repeatDuration
             repeatDuration.value = value;
             endDate.value = calculateEndDate(startDate.value, repeatDuration.value);
         } else if (field === 'endDate') {
-            // Update repeatDuration based on endDate
             endDate.value = value;
+            repeatDuration.value = calculateRepeatDuration(startDate.value, endDate.value);
+        } else if (field === 'startDate') {
+            startDate.value = value;
             repeatDuration.value = calculateRepeatDuration(startDate.value, endDate.value);
         }
     }
@@ -313,7 +314,9 @@ const childrenWithRemainingDays = computed(() =>
                         <label for="startDate">Start date</label>
                     </td>
                     <td>
-                        <input type="date" v-model="startDate"/>
+                        <input type="date"
+                        v-model="startDate"
+                        @input="updateDates('startDate', $event.target.value)"/>
                     </td>   
                     </tr>
                     <tr>
