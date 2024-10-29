@@ -9,6 +9,7 @@
   const today = new Date();
   const newChild = ref({
         name: "",
+        id: -1,
         birthdate: today.toISOString().substring(0, 10),
         parentalLeaveDays: {
                 mother: {
@@ -232,6 +233,7 @@ const childrenWithRemainingDays = computed(() =>
                 percentage: percentage,
                 isLowLevel: isLowLevel,
                 pay: pay,
+                childId: 0, // TODO: Enable selecting which child to use day from
             };
             events.value.push(newEvent);
           }
@@ -264,6 +266,14 @@ const childrenWithRemainingDays = computed(() =>
     }
 
     const addChild = () => {
+        let highestId = -1;
+        children.value.forEach(child => {
+            if (child.id > highestId)
+            {
+                highestId = child.id;
+            }
+        });
+        newChild.value.id = highestId + 1;
         children.value.push(newChild.value);
     }
 
