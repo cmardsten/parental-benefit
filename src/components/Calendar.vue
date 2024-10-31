@@ -135,6 +135,12 @@ const childrenWithRemainingDays = computed(() =>
                 right: 'dayGridMonth,dayGridWeek,dayGridDay'
             },
             events: events.value,
+            eventClick: function(info) {
+                info.jsEvent.preventDefault(); // don't let the browser navigate
+                if (confirm("Do you want to remove the parental day?") == true) {
+                    removeEvent(info.event.id);
+                };
+            },
             eventDidMount: (info) => {
                 // Add a class based on the event's person field
                 var personClass = `person-${info.event.extendedProps.person.toLowerCase()}`;
@@ -181,6 +187,7 @@ const childrenWithRemainingDays = computed(() =>
         return pay;
     };
 
+    let highestEventId = 0;
     const generatePattern = () => {
       for (let week = 0; week < repeatDuration.value; week++) {
         weekDays.forEach((day, index) => {
@@ -234,12 +241,32 @@ const childrenWithRemainingDays = computed(() =>
                 isLowLevel: isLowLevel,
                 pay: pay,
                 childId: 0, // TODO: Enable selecting which child to use day from
+                id: highestEventId,
             };
+            highestEventId++;
             events.value.push(newEvent);
           }
         });
       }
     }
+
+    const removeEvent = (id) => {
+    const event = events.value.find(e => e.id == id);
+    console.log(event);
+    if (event) {
+        const { person, percentage, isLowLevel, childId } = event;
+        const daysToAdjust = isLowLevel ? 'low' : 'high';
+
+        // Find the applicable child and adjust days
+        const personObject = persons.find(personObject => personObject.name === person);
+        const parent = personObject.parent;
+        const child = children.value.find(child => child.id === childId);
+        if (child && child.parentalLeaveDays[parent][daysToAdjust] !== undefined) {
+            child.parentalLeaveDays[parent][daysToAdjust] += (percentage / 100);
+        }
+        events.value = events.value.filter(e => e.id != id);
+    }
+};
 
     const saveCalendar = () => {
       localStorage.setItem('savedEvents', JSON.stringify(events.value));
@@ -268,7 +295,7 @@ const childrenWithRemainingDays = computed(() =>
 
     // Clear events from Local Storage and events ref
     const clearCalendar = () => {
-      events.value = [];
+      events.value =  [];
     }
 
     const addChild = () => {
