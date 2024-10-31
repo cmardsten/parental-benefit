@@ -252,17 +252,41 @@ const childrenWithRemainingDays = computed(() =>
 
     const removeEvent = (id) => {
     const event = events.value.find(e => e.id == id);
-    console.log(event);
     if (event) {
         const { person, percentage, isLowLevel, childId } = event;
         const daysToAdjust = isLowLevel ? 'low' : 'high';
+        const daysToAdd = percentage / 100;
 
         // Find the applicable child and adjust days
         const personObject = persons.find(personObject => personObject.name === person);
         const parent = personObject.parent;
         const child = children.value.find(child => child.id === childId);
-        if (child && child.parentalLeaveDays[parent][daysToAdjust] !== undefined) {
-            child.parentalLeaveDays[parent][daysToAdjust] += (percentage / 100);
+
+        if (child) {
+            if (isLowLevel)
+            {
+                // Transferable low level days
+                if (child.parentalLeaveDays[parent].transferable.low < 90) {
+                    const availableToReserve = 90 - child.parentalLeaveDays[parent].reserved;
+                    const daysToReserve = Math.min(daysToAdd, availableToReserve);
+                    child.parentalLeaveDays[parent].transferable.low += daysToReserve;
+                }
+            }
+            else
+            {
+                let remainingDays = daysToAdd;
+                // Reserved days
+                if (child.parentalLeaveDays[parent].reserved < 90) {
+                    const availableToReserve = 90 - child.parentalLeaveDays[parent].reserved;
+                    const daysToReserve = Math.min(daysToAdd, availableToReserve);
+                    child.parentalLeaveDays[parent].reserved += daysToReserve;
+                    remainingDays -= daysToReserve;
+                }        
+                // Transferable high level days
+                if (remainingDays > 0) {
+                    child.parentalLeaveDays[parent].transferable.high += remainingDays;
+                }
+            }
         }
         events.value = events.value.filter(e => e.id != id);
     }
@@ -295,7 +319,15 @@ const childrenWithRemainingDays = computed(() =>
 
     // Clear events from Local Storage and events ref
     const clearCalendar = () => {
-      events.value =  [];
+      events.value = [];
+      children.value.forEach(child => {
+            child.parentalLeaveDays.mother.reserved = 90;
+            child.parentalLeaveDays.mother.transferable.high = 105;
+            child.parentalLeaveDays.mother.transferable.low = 45;
+            child.parentalLeaveDays.father.reserved = 90;
+            child.parentalLeaveDays.father.transferable.high = 105;
+            child.parentalLeaveDays.father.transferable.low = 45;
+        });
     }
 
     const addChild = () => {
