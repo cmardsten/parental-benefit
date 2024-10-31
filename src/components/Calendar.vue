@@ -243,7 +243,6 @@ const childrenWithRemainingDays = computed(() =>
 
     const saveCalendar = () => {
       localStorage.setItem('savedEvents', JSON.stringify(events.value));
-      localStorage.setItem('savedChildren', JSON.stringify(children.value));
       alert('Calendar events saved!');
     };
 
@@ -253,12 +252,19 @@ const childrenWithRemainingDays = computed(() =>
       if (savedEvents) {
         events.value = JSON.parse(savedEvents);
       };
+    };
+
+    const saveChildren = () => {
+        localStorage.setItem('savedChildren', JSON.stringify(children.value));
+    }
+
+    const loadChildren = () => {
       const savedChildren = localStorage.getItem('savedChildren');
       if (savedChildren)
       {
         children.value = JSON.parse(savedChildren);
       }
-    };
+    }
 
     // Clear events from Local Storage and events ref
     const clearCalendar = () => {
@@ -275,10 +281,12 @@ const childrenWithRemainingDays = computed(() =>
         });
         newChild.value.id = highestId + 1;
         children.value.push(newChild.value);
+        saveChildren();
     }
 
     // Load events automatically when the component is mounted
     onMounted(() => {
+      loadChildren();
       loadCalendar();
     });
   </script>
