@@ -311,6 +311,14 @@ const childrenWithRemainingDays = computed(() =>
         saveChildren();
     }
 
+    const removeChild = (id) => {
+        const childIndex = children.value.findIndex(child => child.id == id);
+        if (childIndex > -1)
+        {
+            children.value.splice(childIndex);
+        }
+    }
+
     // Load events automatically when the component is mounted
     onMounted(() => {
       loadChildren();
@@ -408,6 +416,7 @@ const childrenWithRemainingDays = computed(() =>
                         <h4>{{ child.birthdate }} : {{ child.name }}</h4>
                         <p>Sickness Benefit Level Days Left: {{ child.remainingDays.high }}</p>
                         <p>Low Level Days Left: {{ child.remainingDays.low }}</p>
+                        <button @click="removeChild(child.id)">Remove</button>
                     </div>
                 </div>
                 <h3>Add child</h3>
