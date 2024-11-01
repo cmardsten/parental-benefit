@@ -189,14 +189,15 @@ const childrenWithRemainingDays = computed(() =>
 
     let highestEventId = 0;
     const generatePattern = () => {
-      for (let week = 0; week < repeatDuration.value; week++) {
-        weekDays.forEach((day, index) => {
-          const percentage = pattern.value[day].percentage;
-          if (percentage > 0)
-          {
-            const eventDate = new Date(startDate.value);
-            eventDate.setDate(eventDate.getDate() + index + week * 7); // Calculate the correct date for each day
-            const isLowLevel = pattern.value[day].isLowLevel;
+       const start = new Date(startDate.value);
+       const end = new Date(endDate.value);
+       for (let currentDate = start; currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
+         const dayName = weekDays[(currentDate.getDay() + 6) % 7]; // Get day, but 0 for Monday
+         console.log(dayName);
+         const percentage = pattern.value[dayName].percentage;
+         if (percentage > 0)
+         {
+            const isLowLevel = pattern.value[dayName].isLowLevel;
             const pay = calculateDayPay(selectedPerson.value.salary, percentage, isLowLevel);
             var lowLevelString = "";
             if (isLowLevel)
@@ -235,7 +236,7 @@ const childrenWithRemainingDays = computed(() =>
             // Create the event object
             const newEvent = {
                 title: `${selectedPerson.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr${lowLevelString}`,
-                start: eventDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+                start: currentDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
                 person: selectedPerson.value.name,
                 percentage: percentage,
                 isLowLevel: isLowLevel,
@@ -246,8 +247,7 @@ const childrenWithRemainingDays = computed(() =>
             highestEventId++;
             events.value.push(newEvent);
           }
-        });
-      }
+        }
     }
 
     const removeEvent = (id) => {
@@ -371,6 +371,8 @@ const childrenWithRemainingDays = computed(() =>
                 <button @click="activeTab = 'pattern'">Pattern Settings</button>
                 <button @click="activeTab = 'child'">Children</button>
             </div>
+
+            <!-- Generate pattern tab -->
             <div v-if="activeTab === 'pattern'" class="settings-form">
                 <form @submit.prevent="generatePattern">
                     <!-- Person Selector -->
@@ -428,19 +430,9 @@ const childrenWithRemainingDays = computed(() =>
                     </table>
                     <button type="submit">Generate Pattern</button>
                 </form>
-                <div v-if="events.length">
-                <h3>Generated Events</h3>
-                <ul>
-                    {{ events }}
-                    <li v-for="event in events" :key="event.title">
-                    {{ event.title }} - {{ event.start }} ({{ event.percentage }}%)
-                    </li>
-                </ul>
-                </div>
             </div>
 
-
-
+            <!-- Children tab -->
             <div v-if="activeTab === 'child'" class="settings-form">
                 <h2>Children</h2>
                 <div v-if=children>
