@@ -158,9 +158,9 @@ const childrenWithRemainingDays = computed(() =>
     // Compute total pay for each person
     const totalPay = computed(() => {
         const totals = {};
-        totals.father = events.value.filter(event => event.person === parents.value.father.name)
+        totals.father = events.value.filter(event => event.parent === "father")
                                     .reduce((sum, event) => sum + event.pay, 0);
-        totals.mother = events.value.filter(event => event.person === parents.value.mother.name)
+        totals.mother = events.value.filter(event => event.parent === "mother")
                                     .reduce((sum, event) => sum + event.pay, 0);
         return totals;
     });
