@@ -208,7 +208,6 @@ const childrenWithRemainingDays = computed(() =>
 
             const child = children.value[0];
             const parent = Object.keys(parents.value).find(key => parents.value[key].name === selectedParent.value.name);
-            const dayType = isLowLevel ? "low" : "high";
             const decimalDay = percentage / 100;
             // Subtract a day from the specified parent and day type
             if (isLowLevel)
