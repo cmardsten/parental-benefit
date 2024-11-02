@@ -30,8 +30,8 @@
         });
 
         const parents = ref({
-            father: { isDefined: false, name: '', parent: 'father', salary: 0 },
-            mother: { isDefined: false, name: '', parent: 'mother', salary: 0 }
+            father: { isDefined: false, name: '', salary: 0 },
+            mother: { isDefined: false, name: '', salary: 0 }
         });
       const selectedParent = ref(null);
 
@@ -145,14 +145,13 @@ const childrenWithRemainingDays = computed(() =>
             },
             eventDidMount: (info) => {
                 // Add a class based on the event's person field
-                const person = info.event.extendedProps.person;
-                const parent = Object.keys(parents.value).find(key => parents.value[key].name === person);
-                var personClass = `parent-${parent}`;
+                const parent = info.event.extendedProps.parent;
+                var parentClass = `parent-${parent}`;
                 if (info.event.extendedProps.isLowLevel == true)
                 {
-                    personClass = personClass.concat("-low");
+                    parentClass = parentClass.concat("-low");
                 }
-                info.el.classList.add(personClass);
+                info.el.classList.add(parentClass);
             }
         }));
 
@@ -208,7 +207,7 @@ const childrenWithRemainingDays = computed(() =>
             }
 
             const child = children.value[0];
-            const parent = selectedParent.value.parent;
+            const parent = Object.keys(parents.value).find(key => parents.value[key].name === selectedParent.value.name);
             const dayType = isLowLevel ? "low" : "high";
             const decimalDay = percentage / 100;
             // Subtract a day from the specified parent and day type
@@ -241,6 +240,7 @@ const childrenWithRemainingDays = computed(() =>
                 title: `${selectedParent.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr${lowLevelString}`,
                 start: currentDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
                 person: selectedParent.value.name,
+                parent: parent,
                 percentage: percentage,
                 isLowLevel: isLowLevel,
                 pay: pay,
@@ -256,12 +256,8 @@ const childrenWithRemainingDays = computed(() =>
     const removeEvent = (id) => {
     const event = events.value.find(e => e.id == id);
     if (event) {
-        const { person, percentage, isLowLevel, childId } = event;
-        const daysToAdjust = isLowLevel ? 'low' : 'high';
+        const { parent, percentage, isLowLevel, childId } = event;
         const daysToAdd = percentage / 100;
-
-        // Find the applicable child and adjust days
-        const parent = Object.keys(parents.value).find(key => parents.value[key].name === person);
         const child = children.value.find(child => child.id === childId);
 
         if (child) {
