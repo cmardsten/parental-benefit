@@ -3,31 +3,14 @@
   import FullCalendar from '@fullcalendar/vue3';
   import dayGridPlugin from '@fullcalendar/daygrid';
   import interactionPlugin from '@fullcalendar/interaction';
+  import { Child } from '../Child';
+
 
   const activeTab = ref('pattern');
 
   const today = new Date();
-  const newChild = ref({
-        name: "",
-        id: -1,
-        birthdate: today.toISOString().substring(0, 10),
-        parentalLeaveDays: {
-                mother: {
-                    transferable: {
-                        low: 45,
-                        high: 105
-                    },
-                    reserved: 90,
-                },
-                father: {
-                    transferable: {
-                        low: 45,
-                        high: 105
-                    },
-                    reserved: 90,
-                }
-            }
-        });
+  const newChild = ref(new Child());
+  console.log(newChild.value);
 
         const parents = ref({
             father: { isDefined: false, name: '', salary: 0 },
@@ -191,6 +174,7 @@ const childrenWithRemainingDays = computed(() =>
 
     let highestEventId = 0;
     const generatePattern = () => {
+       // Todo: Evaluate if there are enough days before putting out events
        const start = new Date(startDate.value);
        const end = new Date(endDate.value);
        for (let currentDate = start; currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
@@ -208,33 +192,10 @@ const childrenWithRemainingDays = computed(() =>
 
             const child = children.value[0];
             const parent = Object.keys(parents.value).find(key => parents.value[key].name === selectedParent.value.name);
-            const decimalDay = percentage / 100;
-            // Subtract a day from the specified parent and day type
-            if (isLowLevel)
-            {
-                if (child.parentalLeaveDays[parent].transferable.low >= decimalDay)
-                {
-                    child.parentalLeaveDays[parent].transferable.low -= decimalDay;
-                }
-                else
-                {
-                    alert("No low days left. You need to transfer days.");
-                }
-            }
-            else
-            {
-                if (child.parentalLeaveDays[parent].reserved >= decimalDay)
-                {
-                    child.parentalLeaveDays[parent].reserved -= decimalDay;
-                }
-                else if (child.parentalLeaveDays[parent].transferable.high >= decimalDay)
-                {
-                    child.parentalLeaveDays[parent].transferable.high -= decimalDay;
-                }
-            }
+            const days = percentage / 100;
+            child.parentalLeaveDays.deductDays(parent, days, isLowLevel);
 
             // Create the event object
-            console.log(Object.keys(selectedParent.value));
             const newEvent = {
                 title: `${selectedParent.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr${lowLevelString}`,
                 start: currentDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
@@ -256,35 +217,9 @@ const childrenWithRemainingDays = computed(() =>
     const event = events.value.find(e => e.id == id);
     if (event) {
         const { parent, percentage, isLowLevel, childId } = event;
-        const daysToAdd = percentage / 100;
         const child = children.value.find(child => child.id === childId);
-
-        if (child) {
-            if (isLowLevel)
-            {
-                // Transferable low level days
-                if (child.parentalLeaveDays[parent].transferable.low < 90) {
-                    const availableToReserve = 90 - child.parentalLeaveDays[parent].reserved;
-                    const daysToReserve = Math.min(daysToAdd, availableToReserve);
-                    child.parentalLeaveDays[parent].transferable.low += daysToReserve;
-                }
-            }
-            else
-            {
-                let remainingDays = daysToAdd;
-                // Reserved days
-                if (child.parentalLeaveDays[parent].reserved < 90) {
-                    const availableToReserve = 90 - child.parentalLeaveDays[parent].reserved;
-                    const daysToReserve = Math.min(daysToAdd, availableToReserve);
-                    child.parentalLeaveDays[parent].reserved += daysToReserve;
-                    remainingDays -= daysToReserve;
-                }        
-                // Transferable high level days
-                if (remainingDays > 0) {
-                    child.parentalLeaveDays[parent].transferable.high += remainingDays;
-                }
-            }
-        }
+        const days = percentage / 100;
+        child.parentalLeaveDays.addDays(parent, days, isLowLevel);
         events.value = events.value.filter(e => e.id != id);
     }
 };
@@ -314,6 +249,7 @@ const childrenWithRemainingDays = computed(() =>
       const savedChildren = localStorage.getItem('savedChildren');
       if (savedChildren)
       {
+        // TODO: Parse the information but store it in the latest version of the Child class
         children.value = JSON.parse(savedChildren);
       }
     }
