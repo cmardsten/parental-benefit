@@ -77,7 +77,7 @@ const endDate = ref(todayPlusEightWeeks.toISOString().substring(0, 10));
 
 const calculateEndDate = (start, weeks) => {
    const calculatedDate = new Date(start);
-   calculatedDate.setDate(calculatedDate.getDate() + weeks * 7);
+   calculatedDate.setDate(calculatedDate.getDate() + weeks * 7 - 1);
    return calculatedDate.toISOString().substring(0, 10);
 }
 
