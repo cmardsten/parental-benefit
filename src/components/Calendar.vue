@@ -10,7 +10,6 @@ const activeTab = ref('pattern');
 
 const today = new Date();
 const newChild = ref(new Child());
-console.log(newChild.value);
 
 const parents = ref({
    father: { isDefined: false, name: '', salary: 0 },
