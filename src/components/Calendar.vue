@@ -170,9 +170,41 @@ const calculateDayPay = (monthlySalary, percentage, isLowLevelDay) => {
 
 let highestEventId = 0;
 const generatePattern = () => {
-   // Todo: Evaluate if there are enough days before putting out events
    const start = new Date(startDate.value);
    const end = new Date(endDate.value);
+   const child = children.value[0];
+   const parent = Object.keys(parents.value).find(key => parents.value[key].name === selectedParent.value.name);
+
+   // Validate if there are enough days to create pattern
+   let lowLevelDays = 0;
+   let highLevelDays = 0;
+   for (let currentDate = new Date(start.getTime()); currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
+      const dayName = weekDays[(currentDate.getDay() + 6) % 7]; // Get day, but 0 for Monday
+      const percentage = pattern.value[dayName].percentage;
+      if (percentage > 0) {
+         if (pattern.value[dayName].isLowLevel) {
+            lowLevelDays = lowLevelDays + percentage / 100;
+         } else {
+            highLevelDays = highLevelDays + percentage / 100;
+         }
+      }
+   }
+   let validationFailed = false;
+   if (lowLevelDays > child.parentalLeaveDays.getLowLevelDaysLeft(parent)) {
+      validationFailed = true;
+      const diff = lowLevelDays - child.parentalLeaveDays.getLowLevelDaysLeft(parent)
+      alert(`You will need ${diff} more days on minimum level to generate this pattern."`)
+   }
+   if (highLevelDays > child.parentalLeaveDays.getHighLevelDaysLeft(parent)) {
+      const diff = highLevelDays - child.parentalLeaveDays.getHighLevelDaysLeft(parent);
+      alert(`You will need ${diff} more days on sickness benefit level to generate this pattern."`)
+      validationFailed = true;
+   }
+   if (validationFailed) {
+      return;
+   }
+
+   // Create events and deduct days
    for (let currentDate = start; currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
       const dayName = weekDays[(currentDate.getDay() + 6) % 7]; // Get day, but 0 for Monday
       const percentage = pattern.value[dayName].percentage;
@@ -184,11 +216,8 @@ const generatePattern = () => {
             lowLevelString = " (L)"
          }
 
-         const child = children.value[0];
-         const parent = Object.keys(parents.value).find(key => parents.value[key].name === selectedParent.value.name);
          const days = percentage / 100;
          child.parentalLeaveDays.deductDays(parent, days, isLowLevel);
-
          // Create the event object
          const newEvent = {
             title: `${selectedParent.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr${lowLevelString}`,
@@ -242,8 +271,15 @@ const saveParents = () => {
 const loadChildren = () => {
    const savedChildren = localStorage.getItem('savedChildren');
    if (savedChildren) {
-      // TODO: Parse the information but store it in the latest version of the Child class
-      children.value = JSON.parse(savedChildren);
+      JSON.parse(savedChildren).forEach(childData => {
+         let child = new Child();
+         child.id = childData.id;
+         child.name = childData.name;
+         child.birthdate = childData.birthdate;
+         child.parentalLeaveDays.mother = childData.parentalLeaveDays.mother;
+         child.parentalLeaveDays.father = childData.parentalLeaveDays.father;
+         children.value.push(child);
+      });
    }
 }
 
@@ -454,6 +490,7 @@ onMounted(() => {
          </p>
       </div>
    </div>
+   {{ events }}
 </template>
 
 <style>

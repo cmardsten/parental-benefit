@@ -70,15 +70,20 @@ class ParentalLeaveDays {
 
    /**
     * Gets the total days left for a specific type
-    * @param {string} type - Either 'high' or 'low'
+    * @param {string} parent - The parent to calculate days left for
     * @returns {number} Total days left of the specified type
     */
-   getDaysLeft(type) {
-      if (type === 'high') {
-         return this.reserved.high + this.transferable.high;
-      } else if (type === 'low') {
-         return this.transferable.low;
-      }
+   getLowLevelDaysLeft(parent) {
+      return this[parent].transferable.low;
+   }
+
+   /**
+    * Gets the total days left for a specific type
+    * @param {string} parent - The parent to calculate days left for
+    * @returns {number} Total days left of the specified type
+    */
+   getHighLevelDaysLeft(parent, type) {
+      return this[parent].reserved + this[parent].transferable.high;
    }
 }
 
