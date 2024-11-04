@@ -162,7 +162,7 @@ const calculateDayPay = (monthlySalary, percentage, isLowLevelDay) => {
       pay = 180 * percentage / 100;
    }
    else {
-      const adjustedSgi = 0.97 * 0.8 * 12 * monthlySalary;
+      const adjustedSgi = 0.97 * 0.8 * 12 * Math.min(monthlySalary, 47500);
       pay = (adjustedSgi / 365) * (percentage / 100);
    }
    return pay;
