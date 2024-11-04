@@ -1,12 +1,13 @@
 class ParentalLeaveDays {
-   constructor() {
+   constructor(tuplet) {
+      const extraDays = (tuplet - 1) * 45;
       this.mother = {
          reserved: 90,
-         transferable: { high: 105, low: 45 }
+         transferable: { high: 105 + extraDays, low: 45 + extraDays }
       }
       this.father = {
          reserved: 90,
-         transferable: { high: 105, low: 45 }
+         transferable: { high: 105 + extraDays, low: 45 + extraDays }
       }
    }
 

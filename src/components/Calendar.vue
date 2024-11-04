@@ -276,6 +276,7 @@ const loadChildren = () => {
          child.id = childData.id;
          child.name = childData.name;
          child.birthdate = childData.birthdate;
+         child.tuplet = childData.tuplet;
          child.parentalLeaveDays.mother = childData.parentalLeaveDays.mother;
          child.parentalLeaveDays.father = childData.parentalLeaveDays.father;
          children.value.push(child);
@@ -304,14 +305,23 @@ const clearCalendar = () => {
 }
 
 const addChild = () => {
-   let highestId = -1;
+   let tuplets = false;
    children.value.forEach(child => {
-      if (child.id > highestId) {
-         highestId = child.id;
+      if (child.birthdate == newChild.value.birthdate) {
+         child.tupletify(newChild.value.name);
+         tuplets = true;
       }
    });
-   newChild.value.id = highestId + 1;
-   children.value.push(newChild.value);
+   if (!tuplets) {
+      let highestId = -1;
+      children.value.forEach(child => {
+         if (child.id > highestId) {
+            highestId = child.id;
+         }
+      });
+      newChild.value.id = highestId + 1;
+      children.value.push(newChild.value);
+   }
    saveChildren();
 }
 
