@@ -156,13 +156,24 @@ const renderYearView = () => {
    console.log('Year view triggered');
 };
 
-const calculateDayPay = (monthlySalary, percentage, isLowLevelDay) => {
+const calculateDayPay = (monthlySalary, percentage, isLowLevelDay, date) => {
    var pay = 0;
    if (isLowLevelDay === true) {
       pay = 180 * percentage / 100;
    }
    else {
-      const adjustedSgi = 0.97 * 0.8 * 12 * Math.min(monthlySalary, 47500);
+      let maxSgi = 0;
+      switch (date.getFullYear()) {
+         case 2024:
+            maxSgi = 47750;
+            break;
+         case 2025:
+            maxSgi = 49000;
+            break;
+         default:
+            console.log("Max SGI is not defined for this year.");
+      }
+      const adjustedSgi = 0.97 * 0.8 * 12 * Math.min(monthlySalary, maxSgi);
       pay = (adjustedSgi / 365) * (percentage / 100);
    }
    return pay;
@@ -210,7 +221,7 @@ const generatePattern = () => {
       const percentage = pattern.value[dayName].percentage;
       if (percentage > 0) {
          const isLowLevel = pattern.value[dayName].isLowLevel;
-         const pay = calculateDayPay(selectedParent.value.salary, percentage, isLowLevel);
+         const pay = calculateDayPay(selectedParent.value.salary, percentage, isLowLevel, currentDate);
          var lowLevelString = "";
          if (isLowLevel) {
             lowLevelString = " (L)"
