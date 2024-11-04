@@ -490,7 +490,6 @@ onMounted(() => {
          </p>
       </div>
    </div>
-   {{ events }}
 </template>
 
 <style>
