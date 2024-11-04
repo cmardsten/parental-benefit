@@ -1,7 +1,7 @@
 class ParentalLeaveDays {
    constructor() {
       this.mother = {
-         reserved: 78,
+         reserved: 90,
          transferable: { high: 105, low: 45 }
       }
       this.father = {
