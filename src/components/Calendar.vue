@@ -468,7 +468,7 @@ onMounted(() => {
                <label for="parentName">Father's Name:</label>
                <input type="text" v-model="parents.father.name" placeholder="Enter fathers's name" />
 
-               <label for="salary">Monthly Salary:</label>
+               <label for="salary">Monthly&nbspSalary:</label>
                <input type="number" min=0 v-model="parents.father.salary"
                   placeholder="Enter fathers's monthly salary" />
 
@@ -484,7 +484,7 @@ onMounted(() => {
                <label for="parentName">Mother's Name:</label>
                <input type="text" v-model="parents.mother.name" placeholder="Enter mothers's name" />
 
-               <label for="salary">Monthly Salary:</label>
+               <label for="salary">Monthly&nbspSalary:</label>
                <input type="number" min=0 v-model="parents.mother.salary"
                   placeholder="Enter mothers's monthly salary" />
 
