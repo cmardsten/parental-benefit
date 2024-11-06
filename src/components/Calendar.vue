@@ -9,7 +9,7 @@ import { Child } from '../Child';
 const activeTab = ref('pattern');
 
 const today = new Date();
-const newChild = ref(new Child());
+const newChild = ref({name: "", birthdate: new Date().toISOString().substring(0,10)});
 
 const parents = ref({
    father: { isDefined: false, name: '', salary: 0 },
@@ -318,6 +318,7 @@ const clearCalendar = () => {
 const addChild = () => {
    let tuplets = false;
    children.value.forEach(child => {
+      // This logic will only work as long as all tuplets are the same child object.
       if (child.birthdate == newChild.value.birthdate) {
          child.tupletify(newChild.value.name);
          tuplets = true;
@@ -330,8 +331,8 @@ const addChild = () => {
             highestId = child.id;
          }
       });
-      newChild.value.id = highestId + 1;
-      children.value.push(newChild.value);
+      // Add new child
+      children.value.push(new Child(newChild.value.name, newChild.value.birthdate, highestId + 1));
    }
    saveChildren();
 }

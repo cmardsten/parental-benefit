@@ -1,10 +1,10 @@
 import { ParentalLeaveDays } from './ParentalLeaveDays';
 
 class Child {
-   constructor() {
-      this.name = "";
-      this.id = -1;
-      this.birthdate = new Date().toISOString().substring(0, 10);
+   constructor(name, birthdate, id) {
+      this.name = name;
+      this.id = id;
+      this.birthdate = birthdate;
       this.tuplet = 1;
       this.parentalLeaveDays = new ParentalLeaveDays(this.tuplet);
    }
