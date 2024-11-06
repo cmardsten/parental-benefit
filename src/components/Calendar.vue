@@ -389,8 +389,6 @@ onMounted(() => {
                   <option v-if="parents.mother.isDefined" :value="parents.mother">{{ parents.mother.name }}</option>
                   <option v-if="parents.father.isDefined" :value="parents.father">{{ parents.father.name }}</option>
                </select>
-               <label>Monthly salary:</label>
-               <input v-if="selectedParent" type="number" v-model="selectedParent.salary" />
                <h3>Weekly Pattern</h3>
                <table class="pattern-table">
                   <tr v-for="day in weekDays" :key="day">
