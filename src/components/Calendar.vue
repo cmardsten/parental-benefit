@@ -9,7 +9,7 @@ import { Child } from '../Child';
 const activeTab = ref('pattern');
 
 const today = new Date();
-const newChild = ref({name: "", birthdate: new Date().toISOString().substring(0,10)});
+const newChild = ref({ name: "", birthdate: new Date().toISOString().substring(0, 10) });
 
 const parents = ref({
    father: { isDefined: false, name: '', salary: 0 },
@@ -179,6 +179,12 @@ const calculateDayPay = (monthlySalary, percentage, isLowLevelDay, date) => {
    return pay;
 };
 
+const isDayTaken = (date, parentName) => {
+   return events.value.some(event =>
+      event.start === date && event.person === parentName
+   );
+};
+
 let highestEventId = 0;
 const generatePattern = () => {
    const start = new Date(startDate.value);
@@ -189,6 +195,7 @@ const generatePattern = () => {
    // Validate if there are enough days to create pattern
    let lowLevelDays = 0;
    let highLevelDays = 0;
+   let validationFailed = false;
    for (let currentDate = new Date(start.getTime()); currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
       const dayName = weekDays[(currentDate.getDay() + 6) % 7]; // Get day, but 0 for Monday
       const percentage = pattern.value[dayName].percentage;
@@ -198,17 +205,21 @@ const generatePattern = () => {
          } else {
             highLevelDays = highLevelDays + percentage / 100;
          }
+         const currentDateString = currentDate.toISOString().split('T')[0]
+         if (isDayTaken(currentDateString, selectedParent.value.name)) {
+            alert(`Validation failed: Parent already has a leave scheduled on ${currentDateString}. Please review the dates and try again.`);
+            return;
+         }
       }
    }
-   let validationFailed = false;
    if (lowLevelDays > child.parentalLeaveDays.getLowLevelDaysLeft(parent)) {
       validationFailed = true;
       const diff = lowLevelDays - child.parentalLeaveDays.getLowLevelDaysLeft(parent)
-      alert(`You will need ${diff} more days on minimum level to generate this pattern."`)
+      alert(`Validation failed: ${diff} additional minimum-level days are required. Please adjust the schedule or transfer days and try again.`)
    }
    if (highLevelDays > child.parentalLeaveDays.getHighLevelDaysLeft(parent)) {
       const diff = highLevelDays - child.parentalLeaveDays.getHighLevelDaysLeft(parent);
-      alert(`You will need ${diff} more days on sickness benefit level to generate this pattern."`)
+      alert(`Validation failed: ${diff} additional sickness benefit level days are required. Please adjust the schedule or transfer days and try again.`)
       validationFailed = true;
    }
    if (validationFailed) {
