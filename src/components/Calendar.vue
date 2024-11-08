@@ -384,7 +384,6 @@ onMounted(() => {
 
 <template>
    <button @click="saveCalendar">Save Calendar</button>
-   <button @click="loadCalendar">Load Calendar</button>
    <button @click="clearCalendar">Clear Calendar</button>
    <div class="main-container">
       <div class="left-section">
