@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import multiMonthPlugin from '@fullcalendar/multimonth'
 import { Child } from '../Child';
 
 
@@ -109,14 +110,24 @@ const ratios = [
    { id: 6, ratio: '0' },
 ];
 
+var startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
+var startOfNextYear = new Date(new Date().getFullYear() + 2, 0, 1).toISOString().slice(0, 10);
+
 const calendarOptions = computed(() => ({
    ...FullCalendar.options,
-   plugins: [dayGridPlugin, interactionPlugin],
-   initialView: 'dayGridMonth',
+   plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
+   initialView: 'multiMonthCustomYear',
+   views: {
+    multiMonthCustomYear: {
+      type: 'multiMonth',
+      duration: { months: 12 },
+      buttonText: 'year'
+    }
+  },
    headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,dayGridWeek,dayGridDay'
+      right: 'multiMonthCustomYear,dayGridMonth,dayGridWeek'
    },
    events: events.value,
    eventClick: function (info) {
