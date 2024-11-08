@@ -328,12 +328,7 @@ const loadParents = () => {
 const clearCalendar = () => {
    events.value = [];
    children.value.forEach(child => {
-      child.parentalLeaveDays.mother.reserved = 90;
-      child.parentalLeaveDays.mother.transferable.high = 105;
-      child.parentalLeaveDays.mother.transferable.low = 45;
-      child.parentalLeaveDays.father.reserved = 90;
-      child.parentalLeaveDays.father.transferable.high = 105;
-      child.parentalLeaveDays.father.transferable.low = 45;
+      child.resetParentalLeaveDays();
    });
 }
 

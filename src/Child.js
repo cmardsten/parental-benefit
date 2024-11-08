@@ -14,7 +14,10 @@ class Child {
       this.tuplet++;
       this.parentalLeaveDays = new ParentalLeaveDays(this.tuplet);
    }
-
+   
+   resetParentalLeaveDays() {
+      this.parentalLeaveDays = new ParentalLeaveDays(this.tuplet);
+   }
 }
 
 export { Child };
