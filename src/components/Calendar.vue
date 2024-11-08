@@ -605,6 +605,11 @@ onMounted(() => {
    color: white !important;
 }
 
+.fc-event, .event-title {
+        padding: 0 1px;
+        white-space: normal;
+    }
+
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
    -webkit-appearance: none;
