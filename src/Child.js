@@ -1,12 +1,12 @@
 import { ParentalLeaveDays } from './ParentalLeaveDays';
 
 class Child {
-   constructor(name, birthdate, id) {
+   constructor(name, birthdate, id, tuplet, parentalLeaveDays) {
       this.name = name;
       this.id = id;
       this.birthdate = birthdate;
-      this.tuplet = 1;
-      this.parentalLeaveDays = new ParentalLeaveDays(this.tuplet);
+      this.tuplet = tuplet;
+      this.parentalLeaveDays = parentalLeaveDays;
    }
 
    tupletify(name) {
@@ -16,7 +16,11 @@ class Child {
    }
    
    resetParentalLeaveDays() {
-      this.parentalLeaveDays = new ParentalLeaveDays(this.tuplet);
+      this.parentalLeaveDays = new ParentalLeaveDays(
+         this.tuplet,
+         false,
+         false,
+         this.parentalLeaveDays.adjustedInitialDays);
    }
 }
 

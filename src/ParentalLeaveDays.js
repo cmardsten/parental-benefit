@@ -1,13 +1,46 @@
 class ParentalLeaveDays {
-   constructor(tuplet) {
+   constructor(tuplet, mother=false, father=false, adjustedInitialDays=false) {
       const extraDays = (tuplet - 1) * 45;
-      this.mother = {
-         reserved: 90,
-         transferable: { high: 105 + extraDays, low: 45 + extraDays }
+      if (mother)
+      {
+         this.mother = mother;
       }
-      this.father = {
-         reserved: 90,
-         transferable: { high: 105 + extraDays, low: 45 + extraDays }
+      else
+      {
+         this.mother = {
+            reserved: 90,
+            transferable: { high: 105 + extraDays, low: 45 + extraDays }
+         }
+      }
+      if (father)
+      {
+         this.father = father;
+      }
+      else
+      {
+         this.father = {
+            reserved: 90,
+            transferable: { high: 105 + extraDays, low: 45 + extraDays }
+         }
+      }
+      if (adjustedInitialDays)
+      {
+         this.adjustedInitialDays = adjustedInitialDays;
+         this.adjustForAdjustedInitialDays(this.adjustedInitialDays.father, 'father', this.tuplet);
+         this.adjustForAdjustedInitialDays(this.adjustedInitialDays.mother, 'mother', this.tuplet);
+      }
+      else
+      {
+         this.adjustedInitialDays = {
+            mother: {
+               high: this.getHighLevelDaysLeft('mother'),
+               low: this.getLowLevelDaysLeft('mother')
+            },
+            father: {
+               high: this.getHighLevelDaysLeft('father'),
+               low: this.getLowLevelDaysLeft('father')
+            }
+         }
       }
    }
 
@@ -83,9 +116,61 @@ class ParentalLeaveDays {
     * @param {string} parent - The parent to calculate days left for
     * @returns {number} Total days left of the specified type
     */
-   getHighLevelDaysLeft(parent, type) {
+   getHighLevelDaysLeft(parent) {
       return this[parent].reserved + this[parent].transferable.high;
    }
+
+   getInitialLowLevelDays(tuplet) {
+      const extraDays = (tuplet - 1) * 45;
+      return 45 + extraDays;
+   }
+
+
+   getInitialTransferableHighLevelDays(tuplet) {
+      const extraDays = (tuplet - 1) * 45;
+      return 105 + extraDays;
+   }
+
+   getInitialReservedHighLevelDays() {
+      return 90;
+   }
+
+   /**
+    * Adjust number of days left, depending on initial days current days left
+    * @param {adjustedInitialDays} adjustedInitialDays - An object with initial high and low 
+    *    level days for the father and mother respectively.
+    */
+   adjustForAdjustedInitialDays(adjustedInitialDays, parent, tuplet) {
+      this[parent].transferable.low = adjustedInitialDays.low;
+      const initialTransferableHighLevelDays = this.getInitialTransferableHighLevelDays(tuplet)
+      if (adjustedInitialDays.high > initialTransferableHighLevelDays)
+      {
+         this[parent].transferable.high = initialTransferableHighLevelDays;
+         this[parent].reserved = adjustedInitialDays.high - initialTransferableHighLevelDays;
+      }
+      else
+      {
+         this[parent].transferable.high = adjustedInitialDays.high;
+         this[parent].reserved = 0;
+      }
+   }
+
+   setAdjustedInitialDays(parent, highLevelDays, lowLevelDays) {
+      this.adjustedInitialDays[parent].highLevelDays = highLevelDays;
+      this.adjustedInitialDays[parent].lowLevelDays = lowLevelDays;
+      this.adjustForAdjustedInitialDays(this.adjustedInitialDays[parent], parent, this.tuplet);
+    }
+
+    getAdjustedInitialDays() {
+      if (this.adjustedInitialDays)
+      {
+         return this.adjustedInitialDays;
+      }
+      else
+      {
+         return {}
+      }
+    }
 }
 
 export { ParentalLeaveDays };

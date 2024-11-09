@@ -5,12 +5,16 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth'
 import { Child } from '../Child';
+import { ParentalLeaveDays } from '../ParentalLeaveDays';
+
 
 
 const activeTab = ref('pattern');
 
 const today = new Date();
 const newChild = ref({ name: "", birthdate: new Date().toISOString().substring(0, 10) });
+const editChildren = ref(-1);
+const adjustedInitialDays = ref(null);
 
 const parents = ref({
    father: { isDefined: false, name: '', salary: 0 },
@@ -118,12 +122,12 @@ const calendarOptions = computed(() => ({
    plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
    initialView: 'multiMonthCustomYear',
    views: {
-    multiMonthCustomYear: {
-      type: 'multiMonth',
-      duration: { months: 12 },
-      buttonText: 'year'
-    }
-  },
+      multiMonthCustomYear: {
+         type: 'multiMonth',
+         duration: { months: 12 },
+         buttonText: 'year'
+      }
+   },
    headerToolbar: {
       left: 'prev,next today',
       center: 'title',
@@ -305,13 +309,13 @@ const loadChildren = () => {
    const savedChildren = localStorage.getItem('savedChildren');
    if (savedChildren) {
       JSON.parse(savedChildren).forEach(childData => {
-         let child = new Child();
-         child.id = childData.id;
-         child.name = childData.name;
-         child.birthdate = childData.birthdate;
-         child.tuplet = childData.tuplet;
-         child.parentalLeaveDays.mother = childData.parentalLeaveDays.mother;
-         child.parentalLeaveDays.father = childData.parentalLeaveDays.father;
+         const parentalLeaveDays = new ParentalLeaveDays(1,
+            childData.parentalLeaveDays.mother,
+            childData.parentalLeaveDays.father,
+            childData.parentalLeaveDays.adjustedInitialDays,
+         );
+
+         let child = new Child(childData.name, childData.birthdate, childData.id, childData.tuplet, parentalLeaveDays);
          children.value.push(child);
       });
    }
@@ -349,7 +353,8 @@ const addChild = () => {
          }
       });
       // Add new child
-      children.value.push(new Child(newChild.value.name, newChild.value.birthdate, highestId + 1));
+      const parentalLeaveDays = new ParentalLeaveDays(1);
+      children.value.push(new Child(newChild.value.name, newChild.value.birthdate, highestId + 1, 1, parentalLeaveDays));
    }
    saveChildren();
 }
@@ -359,6 +364,19 @@ const removeChild = (id) => {
    if (childIndex > -1) {
       children.value.splice(childIndex, 1);
    }
+   editChildren.value = -1;
+}
+
+const editChild = (id) => {
+   adjustedInitialDays.value = children.value[id].parentalLeaveDays.getAdjustedInitialDays();
+   editChildren.value = id;
+}
+
+const updateChild = (id) => {
+   children.value[id].parentalLeaveDays.setAdjustedInitialDays('father', adjustedInitialDays.value.father.high, adjustedInitialDays.value.father.low);
+   children.value[id].parentalLeaveDays.setAdjustedInitialDays('mother', adjustedInitialDays.value.mother.high, adjustedInitialDays.value.mother.low);
+   editChildren.value = - 1
+   saveChildren();
 }
 
 const addParent = (parent) => {
@@ -455,9 +473,28 @@ onMounted(() => {
             <div v-if=children>
                <div v-for="child in childrenWithRemainingDays" :key="child.name">
                   <h4>{{ child.birthdate }} : {{ child.name }}</h4>
-                  <p>Sickness Benefit Level Days Left: {{ child.remainingDays.high }}</p>
-                  <p>Low Level Days Left: {{ child.remainingDays.low }}</p>
-                  <button @click="removeChild(child.id)">Remove</button>
+                  <p>Sickness Benefit Level Days Left:</p>
+                  <div v-if="editChildren == child.id">
+                     <label>Father:</label>
+                     <input type="number" v-model="adjustedInitialDays.father.high" />
+                     <label>Mother:</label>
+                     <input type="number" v-model="adjustedInitialDays.mother.high" />
+                  </div>
+                  <p v-else>{{ child.remainingDays.high }}</p>
+                  <p>Low Level Days Left:</p>
+                  <div v-if="editChildren == child.id">
+                     <label>Father:</label>
+                     <input type="number" v-model="adjustedInitialDays.father.low" />
+                     <label>Mother:</label>
+                     <input type="number" v-model="adjustedInitialDays.mother.low" />
+
+                  </div>
+                  <p v-else>{{ child.remainingDays.low }}</p>
+                  <div>
+                     <button v-if="editChildren == child.id" @click="updateChild(child.id)">OK</button>
+                     <button v-if="editChildren == child.id" @click="removeChild(child.id)">Remove child</button>
+                     <button v-else @click="editChild(child.id)">Edit</button>
+                  </div>
                </div>
             </div>
             <h3>Add child</h3>
@@ -605,10 +642,11 @@ onMounted(() => {
    color: white !important;
 }
 
-.fc-event, .event-title {
-        padding: 0 1px;
-        white-space: normal;
-    }
+.fc-event,
+.event-title {
+   padding: 0 1px;
+   white-space: normal;
+}
 
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
