@@ -357,7 +357,7 @@ const addChild = () => {
 const removeChild = (id) => {
    const childIndex = children.value.findIndex(child => child.id == id);
    if (childIndex > -1) {
-      children.value.splice(childIndex);
+      children.value.splice(childIndex, 1);
    }
 }
 
