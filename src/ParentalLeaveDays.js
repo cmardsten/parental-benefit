@@ -111,6 +111,14 @@ class ParentalLeaveDays {
       return this[parent].transferable.low;
    }
 
+   getTotalLowLevelDaysLeft() {
+      return this.mother.transferable.low + this.father.transferable.low;
+   }
+
+   getTotalHighLevelDaysLeft() {
+      return this.getHighLevelDaysLeft('father') + this.getHighLevelDaysLeft('mother');
+   }
+
    /**
     * Gets the total days left for a specific type
     * @param {string} parent - The parent to calculate days left for

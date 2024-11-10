@@ -27,10 +27,10 @@ const selectedChild = ref(null);
 const totalRemainingDays = computed(() => {
    return children.value.reduce(
       (totals, child) => {
-         totals.mother.high += child.parentalLeaveDays.mother.transferable.high + child.parentalLeaveDays.mother.reserved;
-         totals.mother.low += child.parentalLeaveDays.mother.transferable.low;
-         totals.father.high += child.parentalLeaveDays.father.transferable.high + child.parentalLeaveDays.father.reserved;
-         totals.father.low += child.parentalLeaveDays.father.transferable.low;
+         totals.mother.high += child.parentalLeaveDays.getHighLevelDaysLeft('mother');
+         totals.mother.low += child.parentalLeaveDays.getLowLevelDaysLeft('mother');
+         totals.father.high += child.parentalLeaveDays.getHighLevelDaysLeft('father');
+         totals.father.low += child.parentalLeaveDays.getLowLevelDaysLeft('father');
          return totals;
       },
       { mother: { high: 0, low: 0 }, father: { high: 0, low: 0 } }
@@ -40,23 +40,11 @@ const totalRemainingDays = computed(() => {
 // Computed property to calculate remaining days for each child
 const childrenWithRemainingDays = computed(() =>
    children.value.map(child => {
-      const { mother, father } = child.parentalLeaveDays;
-
-      const totalHigh =
-         mother.transferable.high +
-         mother.reserved +
-         father.transferable.high +
-         father.reserved;
-
-      const totalLow =
-         mother.transferable.low +
-         father.transferable.low;
-
       return {
          ...child,
          remainingDays: {
-            high: totalHigh,
-            low: totalLow,
+            high: child.parentalLeaveDays.getTotalHighLevelDaysLeft(),
+            low: child.parentalLeaveDays.getTotalLowLevelDaysLeft(),
          },
       };
    })
