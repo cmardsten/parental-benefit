@@ -369,13 +369,15 @@ const removeChild = (id) => {
 }
 
 const editChild = (id) => {
-   adjustedInitialDays.value = children.value[id].parentalLeaveDays.getAdjustedInitialDays();
+   const child = children.value.find(child => child.id === id)
+   adjustedInitialDays.value = child.parentalLeaveDays.getAdjustedInitialDays();
    editChildren.value = id;
 }
 
 const updateChild = (id) => {
-   children.value[id].parentalLeaveDays.setAdjustedInitialDays('father', adjustedInitialDays.value.father.high, adjustedInitialDays.value.father.low);
-   children.value[id].parentalLeaveDays.setAdjustedInitialDays('mother', adjustedInitialDays.value.mother.high, adjustedInitialDays.value.mother.low);
+   const child = children.value.find(child => child.id === id)
+   child.parentalLeaveDays.setAdjustedInitialDays('father', adjustedInitialDays.value.father.high, adjustedInitialDays.value.father.low);
+   child.parentalLeaveDays.setAdjustedInitialDays('mother', adjustedInitialDays.value.mother.high, adjustedInitialDays.value.mother.low);
    editChildren.value = - 1
    saveChildren();
 }
