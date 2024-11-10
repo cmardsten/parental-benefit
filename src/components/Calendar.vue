@@ -361,6 +361,11 @@ const removeChild = (id) => {
       children.value.splice(childIndex, 1);
    }
    editChildren.value = -1;
+   if (children.value.length > 0)
+   {
+      selectedChild.value = children.value[0]
+   }
+   saveChildren();
 }
 
 const editChild = (id) => {
