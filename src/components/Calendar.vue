@@ -21,7 +21,7 @@ const parents = ref({
    mother: { isDefined: false, name: '', salary: 0 }
 });
 const selectedParent = ref(null);
-
+const selectedChild = ref(null);
 
 // Track the total remaining days for each parent across all children
 const totalRemainingDays = computed(() => {
@@ -204,9 +204,8 @@ let highestEventId = 0;
 const generatePattern = () => {
    const start = new Date(startDate.value);
    const end = new Date(endDate.value);
-   const child = children.value[0];
+   const child = children.value.find(child => child.id === selectedChild.value.id);
    const parent = Object.keys(parents.value).find(key => parents.value[key].name === selectedParent.value.name);
-
    // Validate if there are enough days to create pattern
    let lowLevelDays = 0;
    let highLevelDays = 0;
@@ -264,7 +263,7 @@ const generatePattern = () => {
             percentage: percentage,
             isLowLevel: isLowLevel,
             pay: pay,
-            childId: 0, // TODO: Enable selecting which child to use day from
+            childId: child.id,
             id: highestEventId,
          };
          highestEventId++;
@@ -397,6 +396,9 @@ onMounted(() => {
    } else {
       activeTab.value = 'parents'
    }
+   if (children.value.length > 0) {
+      selectedChild.value = children.value[0];
+   }
 });
 </script>
 
@@ -418,11 +420,17 @@ onMounted(() => {
          <div v-if="activeTab === 'pattern'" class="settings-form">
             <form @submit.prevent="generatePattern">
                <!-- Person Selector -->
-               <label for="person">Select Person:</label>
+               <label for="person">Parent:</label>
                <select v-model="selectedParent">
                   <option v-if="parents.mother.isDefined" :value="parents.mother">{{ parents.mother.name }}</option>
                   <option v-if="parents.father.isDefined" :value="parents.father">{{ parents.father.name }}</option>
                </select>
+               <div>
+                  <label for="child">Child:</label>
+                  <select v-model="selectedChild">
+                     <option v-for="child in children" :value="child">{{ child.name }}</option>
+                  </select>
+               </div>
                <h3>Weekly Pattern</h3>
                <table class="pattern-table">
                   <tr v-for="day in weekDays" :key="day">
