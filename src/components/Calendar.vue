@@ -425,11 +425,15 @@ onMounted(() => {
                   <option v-if="parents.mother.isDefined" :value="parents.mother">{{ parents.mother.name }}</option>
                   <option v-if="parents.father.isDefined" :value="parents.father">{{ parents.father.name }}</option>
                </select>
-               <div>
+               <div v-if="children.length > 1">
                   <label for="child">Child:</label>
                   <select v-model="selectedChild">
                      <option v-for="child in children" :value="child">{{ child.name }}</option>
                   </select>
+               </div>
+               <div v-else>
+                  <label for="child">Child:</label>
+                  {{ selectedChild.name }}
                </div>
                <h3>Weekly Pattern</h3>
                <table class="pattern-table">
