@@ -270,6 +270,7 @@ const generatePattern = () => {
          events.value.push(newEvent);
       }
    }
+   saveEvents();
 }
 
 const removeEvent = (id) => {
@@ -281,11 +282,11 @@ const removeEvent = (id) => {
       child.parentalLeaveDays.addDays(parent, days, isLowLevel);
       events.value = events.value.filter(e => e.id != id);
    }
+   saveEvents();
 };
 
-const saveCalendar = () => {
+const saveEvents = () => {
    localStorage.setItem('savedEvents', JSON.stringify(events.value));
-   alert('Calendar events saved!');
 };
 
 // Load events from Local Storage
@@ -333,6 +334,7 @@ const clearCalendar = () => {
    children.value.forEach(child => {
       child.resetParentalLeaveDays();
    });
+   saveEvents();
 }
 
 const addChild = () => {
@@ -407,7 +409,6 @@ onMounted(() => {
 </script>
 
 <template>
-   <button @click="saveCalendar">Save Calendar</button>
    <button @click="clearCalendar">Clear Calendar</button>
    <div class="main-container">
       <div class="left-section">
