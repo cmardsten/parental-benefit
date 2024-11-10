@@ -355,6 +355,10 @@ const addChild = () => {
       const parentalLeaveDays = new ParentalLeaveDays(1);
       children.value.push(new Child(newChild.value.name, newChild.value.birthdate, highestId + 1, 1, parentalLeaveDays));
    }
+   if (!selectedChild.value)
+   {
+      selectedChild.value = children.value[0];
+   }
    saveChildren();
 }
 
@@ -418,7 +422,7 @@ onMounted(() => {
 
          <!-- Generate pattern tab -->
          <div v-if="activeTab === 'pattern'" class="settings-form">
-            <form @submit.prevent="generatePattern">
+            <form v-if="children.length > 0 && (parents.mother.isDefined || parents.father.isDefined)" @submit.prevent="generatePattern">
                <!-- Person Selector -->
                <label for="person">Parent:</label>
                <select v-model="selectedParent">
@@ -477,6 +481,11 @@ onMounted(() => {
                </table>
                <button type="submit">Generate Pattern</button>
             </form>
+            <div v-else>
+            <p>Pattern generation not possible:</p>
+            <p v-if="children.length==0">No child added.</p>
+            <p v-if="!parents.father.isDefined && !parents.mother.isDefined">No parent added.</p>
+            </div>
          </div>
 
          <!-- Children tab -->
