@@ -330,11 +330,14 @@ const loadParents = () => {
 
 // Clear events from Local Storage and events ref
 const clearCalendar = () => {
-   events.value = [];
-   children.value.forEach(child => {
-      child.resetParentalLeaveDays();
-   });
-   saveEvents();
+   if (confirm("Warning: This will clear all patterns for all parents. Do you want to continue?"))
+   {
+      events.value = [];
+      children.value.forEach(child => {
+         child.resetParentalLeaveDays();
+      });
+      saveEvents();
+   }
 }
 
 const addChild = () => {
@@ -409,7 +412,6 @@ onMounted(() => {
 </script>
 
 <template>
-   <button @click="clearCalendar">Clear Calendar</button>
    <div class="main-container">
       <div class="left-section">
          <div class="calendar">
@@ -423,7 +425,10 @@ onMounted(() => {
 
          <!-- Generate pattern tab -->
          <div v-if="activeTab === 'pattern'" class="settings-form">
-            <form v-if="children.length > 0 && (parents.mother.isDefined || parents.father.isDefined)" @submit.prevent="generatePattern">
+            <form v-if="children.length > 0 && (parents.mother.isDefined || parents.father.isDefined)" @submit.prevent>
+               <div>
+                  <button @click="clearCalendar">Clear all patterns</button>
+               </div>
                <!-- Person Selector -->
                <label for="person">Parent:</label>
                <select v-model="selectedParent">
@@ -480,7 +485,7 @@ onMounted(() => {
                      </td>
                   </tr>
                </table>
-               <button type="submit">Generate Pattern</button>
+               <button type="submit" @click="generatePattern">Generate Pattern</button>
             </form>
             <div v-else>
             <p>Pattern generation not possible:</p>
