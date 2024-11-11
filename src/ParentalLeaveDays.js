@@ -1,6 +1,7 @@
 class ParentalLeaveDays {
    constructor(tuplet, mother=false, father=false, doubleDaysLeft=false) {
       const extraDays = (tuplet - 1) * 45;
+      this.tuplet = tuplet;
       if (tuplet == 1)
       {
          if (doubleDaysLeft)
@@ -124,25 +125,15 @@ class ParentalLeaveDays {
       return this[parent].reserved + this[parent].transferable.high;
    }
 
-   getInitialLowLevelDays(tuplet) {
-      const extraDays = (tuplet - 1) * 45;
-      return 45 + extraDays;
-   }
-
-
-   getInitialTransferableHighLevelDays(tuplet) {
-      const extraDays = (tuplet - 1) * 45;
+   getInitialTransferableHighLevelDays() {
+      const extraDays = (this.tuplet - 1) * 45;
       return 105 + extraDays;
    }
 
-   getInitialReservedHighLevelDays() {
-      return 90;
-   }
-
-   adjustForAdjustedInitialDays(adjustedInitialDays, tuplet) {
+   adjustForAdjustedInitialDays(adjustedInitialDays) {
       this.doubleDaysLeft = adjustedInitialDays.double;
-      this.adjustInitialDaysForParent(adjustedInitialDays.father, 'father', tuplet);
-      this.adjustInitialDaysForParent(adjustedInitialDays.mother, 'mother', tuplet);
+      this.adjustInitialDaysForParent(adjustedInitialDays.father, 'father');
+      this.adjustInitialDaysForParent(adjustedInitialDays.mother, 'mother');
    }
 
    /**
@@ -150,9 +141,9 @@ class ParentalLeaveDays {
     * @param {adjustedInitialDays} adjustedInitialDays - An object with initial high and low 
     *    level days for the father and mother respectively.
     */
-   adjustInitialDaysForParent(adjustedInitialDays, parent, tuplet) {
+   adjustInitialDaysForParent(adjustedInitialDays, parent) {
       this[parent].transferable.low = adjustedInitialDays.low;
-      const initialTransferableHighLevelDays = this.getInitialTransferableHighLevelDays(tuplet)
+      const initialTransferableHighLevelDays = this.getInitialTransferableHighLevelDays()
       if (adjustedInitialDays.high > initialTransferableHighLevelDays)
       {
          this[parent].transferable.high = initialTransferableHighLevelDays;
