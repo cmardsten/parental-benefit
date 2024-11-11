@@ -33,7 +33,7 @@ const totalRemainingDays = computed(() => {
          totals.father.low += child.parentalLeaveDays.getLowLevelDaysLeft('father');
          return totals;
       },
-      { mother: { high: 0, low: 0 }, father: { high: 0, low: 0 } }
+      { mother: { high: 0, low: 0 }, father: { high: 0, low: 0 }, double: 0 }
    );
 });
 
@@ -42,9 +42,12 @@ const childrenWithRemainingDays = computed(() =>
    children.value.map(child => {
       return {
          ...child,
+         tuplet: child.tuplet,
          remainingDays: {
             high: child.parentalLeaveDays.getTotalHighLevelDaysLeft(),
             low: child.parentalLeaveDays.getTotalLowLevelDaysLeft(),
+            double: child.parentalLeaveDays.getDoubleDaysLeft(),
+            doubleDaysExpiration: child.getDoubleDaysExpiryDate().toISOString().substring(0, 10),
          },
       };
    })
@@ -182,11 +185,18 @@ const calculateDayPay = (monthlySalary, percentage, isLowLevelDay, date) => {
    return pay;
 };
 
-const isDayTaken = (date, parentName) => {
+const isDayTaken = (date, parent) => {
    return events.value.some(event =>
-      event.start === date && event.person === parentName
+      event.start === date && event.parent === parent
    );
 };
+
+const isDoubleDay = (date, childId, parent) => {
+   return events.value.some(event =>
+      event.start === date && ((event.childId === childId) && (event.parent != parent))
+   );
+};
+
 
 let highestEventId = 0;
 const generatePattern = () => {
@@ -197,6 +207,7 @@ const generatePattern = () => {
    // Validate if there are enough days to create pattern
    let lowLevelDays = 0;
    let highLevelDays = 0;
+   let doubleDays = 0;
    let validationFailed = false;
    for (let currentDate = new Date(start.getTime()); currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
       const dayName = weekDays[(currentDate.getDay() + 6) % 7]; // Get day, but 0 for Monday
@@ -208,11 +219,19 @@ const generatePattern = () => {
             highLevelDays = highLevelDays + percentage / 100;
          }
          const currentDateString = currentDate.toISOString().split('T')[0]
-         if (isDayTaken(currentDateString, selectedParent.value.name)) {
+         if (isDayTaken(currentDateString, parent)) {
             alert(`Validation failed: Parent already has a leave scheduled on ${currentDateString}. Please review the dates and try again.`);
             return;
          }
+         if (isDoubleDay(currentDateString, child.id)) {
+            doubleDays++;
+         }
       }
+   }
+   if (doubleDays > child.parentalLeaveDays.getDoubleDaysLeft()) {
+      validationFailed = true;
+      const diff = doubleDays - child.parentalLeaveDays.getDoubleDaysLeft();
+      alert(`Validation failed: ${diff} additional double days are required. Please adjust the schedule and try again.`);
    }
    if (lowLevelDays > child.parentalLeaveDays.getLowLevelDaysLeft(parent)) {
       validationFailed = true;
@@ -228,7 +247,9 @@ const generatePattern = () => {
       return;
    }
 
+
    // Create events and deduct days
+   child.parentalLeaveDays.deductDoubleDays(doubleDays);
    for (let currentDate = start; currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
       const dayName = weekDays[(currentDate.getDay() + 6) % 7]; // Get day, but 0 for Monday
       const percentage = pattern.value[dayName].percentage;
@@ -264,10 +285,13 @@ const generatePattern = () => {
 const removeEvent = (id) => {
    const event = events.value.find(e => e.id == id);
    if (event) {
-      const { parent, percentage, isLowLevel, childId } = event;
+      const { parent, percentage, isLowLevel, childId, start } = event;
       const child = children.value.find(child => child.id === childId);
       const days = percentage / 100;
       child.parentalLeaveDays.addDays(parent, days, isLowLevel);
+      if (isDoubleDay(start, childId, parent)) {
+         child.parentalLeaveDays.addDoubleDay();
+      }
       events.value = events.value.filter(e => e.id != id);
    }
    saveEvents();
@@ -297,12 +321,11 @@ const loadChildren = () => {
    const savedChildren = localStorage.getItem('savedChildren');
    if (savedChildren) {
       JSON.parse(savedChildren).forEach(childData => {
-         const parentalLeaveDays = new ParentalLeaveDays(1,
+         const parentalLeaveDays = new ParentalLeaveDays(childData.tuplet,
             childData.parentalLeaveDays.mother,
             childData.parentalLeaveDays.father,
-            childData.parentalLeaveDays.adjustedInitialDays,
+            childData.parentalLeaveDays.doubleDaysLeft
          );
-
          let child = new Child(childData.name, childData.birthdate, childData.id, childData.tuplet, parentalLeaveDays);
          children.value.push(child);
       });
@@ -318,12 +341,11 @@ const loadParents = () => {
 
 // Clear events from Local Storage and events ref
 const clearCalendar = () => {
-   if (confirm("Warning: This will clear all patterns for all parents. Do you want to continue?"))
-   {
-      events.value = [];
-      children.value.forEach(child => {
-         child.resetParentalLeaveDays();
-      });
+   if (confirm("Warning: This will clear all patterns for all parents. Do you want to continue?")) {
+      while (events.value.length) {
+         const id = events.value[events.value.length - 1].id;
+         removeEvent(id);
+      }
       saveEvents();
    }
 }
@@ -348,8 +370,7 @@ const addChild = () => {
       const parentalLeaveDays = new ParentalLeaveDays(1);
       children.value.push(new Child(newChild.value.name, newChild.value.birthdate, highestId + 1, 1, parentalLeaveDays));
    }
-   if (!selectedChild.value)
-   {
+   if (!selectedChild.value) {
       selectedChild.value = children.value[0];
    }
    saveChildren();
@@ -361,8 +382,7 @@ const removeChild = (id) => {
       children.value.splice(childIndex, 1);
    }
    editChildren.value = -1;
-   if (children.value.length > 0)
-   {
+   if (children.value.length > 0) {
       selectedChild.value = children.value[0]
    }
    saveChildren();
@@ -376,8 +396,7 @@ const editChild = (id) => {
 
 const updateChild = (id) => {
    const child = children.value.find(child => child.id === id)
-   child.parentalLeaveDays.setAdjustedInitialDays('father', adjustedInitialDays.value.father.high, adjustedInitialDays.value.father.low);
-   child.parentalLeaveDays.setAdjustedInitialDays('mother', adjustedInitialDays.value.mother.high, adjustedInitialDays.value.mother.low);
+   child.parentalLeaveDays.setAdjustedInitialDays(adjustedInitialDays.value);
    editChildren.value = - 1
    saveChildren();
 }
@@ -483,9 +502,9 @@ onMounted(() => {
                <button type="submit" @click="generatePattern">Generate Pattern</button>
             </form>
             <div v-else>
-            <p>Pattern generation not possible:</p>
-            <p v-if="children.length==0">No child added.</p>
-            <p v-if="!parents.father.isDefined && !parents.mother.isDefined">No parent added.</p>
+               <p>Pattern generation not possible:</p>
+               <p v-if="children.length == 0">No child added.</p>
+               <p v-if="!parents.father.isDefined && !parents.mother.isDefined">No parent added.</p>
             </div>
          </div>
 
@@ -512,6 +531,14 @@ onMounted(() => {
 
                   </div>
                   <p v-else>{{ child.remainingDays.low }}</p>
+                  <div v-if="child.tuplet == 1">
+                     <p> Double Days Left:</p>
+                     <div v-if="editChildren == child.id">
+                        <input type="number" v-model="adjustedInitialDays.double" />
+                     </div>
+                     <p v-else>{{ child.remainingDays.double }} (valid to {{ child.remainingDays.doubleDaysExpiration
+                        }})</p>
+                  </div>
                   <div>
                      <button v-if="editChildren == child.id" @click="updateChild(child.id)">OK</button>
                      <button v-if="editChildren == child.id" @click="removeChild(child.id)">Remove child</button>

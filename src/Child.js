@@ -14,13 +14,11 @@ class Child {
       this.tuplet++;
       this.parentalLeaveDays = new ParentalLeaveDays(this.tuplet);
    }
-   
-   resetParentalLeaveDays() {
-      this.parentalLeaveDays = new ParentalLeaveDays(
-         this.tuplet,
-         false,
-         false,
-         this.parentalLeaveDays.adjustedInitialDays);
+
+   getDoubleDaysExpiryDate() {
+      let expiryDate = new Date(this.birthdate);
+      expiryDate.setMonth(expiryDate.getMonth() + 15);
+      return expiryDate;
    }
 }
 
