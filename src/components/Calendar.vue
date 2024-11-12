@@ -14,7 +14,7 @@ const activeTab = ref('pattern');
 const today = new Date();
 const newChild = ref({ name: "", birthdate: new Date().toISOString().substring(0, 10) });
 const editChildren = ref(-1);
-const adjustedInitialDays = ref(null);
+const adjustedDays = ref(null);
 
 const parents = ref({
    father: { isDefined: false, name: '', salary: 0 },
@@ -321,11 +321,7 @@ const loadChildren = () => {
    const savedChildren = localStorage.getItem('savedChildren');
    if (savedChildren) {
       JSON.parse(savedChildren).forEach(childData => {
-         const parentalLeaveDays = new ParentalLeaveDays(childData.tuplet,
-            childData.parentalLeaveDays.mother,
-            childData.parentalLeaveDays.father,
-            childData.parentalLeaveDays.doubleDaysLeft
-         );
+         const parentalLeaveDays = new ParentalLeaveDays(childData.tuplet, childData.parentalLeaveDays);
          let child = new Child(childData.name, childData.birthdate, childData.id, childData.tuplet, parentalLeaveDays);
          children.value.push(child);
       });
@@ -390,13 +386,13 @@ const removeChild = (id) => {
 
 const editChild = (id) => {
    const child = children.value.find(child => child.id === id)
-   adjustedInitialDays.value = child.parentalLeaveDays.getAdjustedInitialDays();
+   adjustedDays.value = child.parentalLeaveDays.getAllDays();
    editChildren.value = id;
 }
 
 const updateChild = (id) => {
    const child = children.value.find(child => child.id === id)
-   child.parentalLeaveDays.setAdjustedInitialDays(adjustedInitialDays.value);
+   child.parentalLeaveDays.setAllDays(adjustedDays.value);
    editChildren.value = - 1
    saveChildren();
 }
@@ -517,24 +513,24 @@ onMounted(() => {
                   <p>Sickness Benefit Level Days Left:</p>
                   <div v-if="editChildren == child.id">
                      <label>Father:</label>
-                     <input type="number" v-model="adjustedInitialDays.father.high" />
+                     <input type="number" v-model="adjustedDays.father.high" />
                      <label>Mother:</label>
-                     <input type="number" v-model="adjustedInitialDays.mother.high" />
+                     <input type="number" v-model="adjustedDays.mother.high" />
                   </div>
                   <p v-else>{{ child.remainingDays.high }}</p>
                   <p>Low Level Days Left:</p>
                   <div v-if="editChildren == child.id">
                      <label>Father:</label>
-                     <input type="number" v-model="adjustedInitialDays.father.low" />
+                     <input type="number" v-model="adjustedDays.father.low" />
                      <label>Mother:</label>
-                     <input type="number" v-model="adjustedInitialDays.mother.low" />
+                     <input type="number" v-model="adjustedDays.mother.low" />
 
                   </div>
                   <p v-else>{{ child.remainingDays.low }}</p>
                   <div v-if="child.tuplet == 1">
                      <p> Double Days Left:</p>
                      <div v-if="editChildren == child.id">
-                        <input type="number" v-model="adjustedInitialDays.double" />
+                        <input type="number" v-model="adjustedDays.double" />
                      </div>
                      <p v-else>{{ child.remainingDays.double }} (valid to {{ child.remainingDays.doubleDaysExpiration
                         }})</p>

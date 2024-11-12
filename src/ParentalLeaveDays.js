@@ -1,43 +1,26 @@
 class ParentalLeaveDays {
-   constructor(tuplet, mother=false, father=false, doubleDaysLeft=false) {
-      const extraDays = (tuplet - 1) * 45;
+   constructor(tuplet, days=false) {
       this.tuplet = tuplet;
-      if (tuplet == 1)
-      {
-         if (doubleDaysLeft)
-         {
-            this.doubleDaysLeft = doubleDaysLeft;
+      this.mother = {
+         reserved: 90,
+         transferable: {
+            high: this.getInitialTransferableHighLevelDays(),
+            low: this.getInitialLowLevelDays()
          }
-         else
-         {
-            this.doubleDaysLeft = 60;
+      };
+      this.father = {
+         reserved: 90,
+         transferable: {
+            high: this.getInitialTransferableHighLevelDays(),
+            low: this.getInitialLowLevelDays()
          }
-      }
-      else
+      };
+      this.double = this.tuplet == 1 ? 60 : Infinity;
+      if (days)
       {
-         this.doubleDaysLeft = Infinity;
-      }
-      if (mother)
-      {
-         this.mother = mother;
-      }
-      else
-      {
-         this.mother = {
-            reserved: 90,
-            transferable: { high: 105 + extraDays, low: 45 + extraDays }
-         }
-      }
-      if (father)
-      {
-         this.father = father;
-      }
-      else
-      {
-         this.father = {
-            reserved: 90,
-            transferable: { high: 105 + extraDays, low: 45 + extraDays }
-         }
+         this.mother = days.mother;
+         this.father = days.father;
+         this.double = days.double;
       }
    }
 
@@ -130,38 +113,37 @@ class ParentalLeaveDays {
       return 105 + extraDays;
    }
 
-   adjustForAdjustedInitialDays(adjustedInitialDays) {
-      this.doubleDaysLeft = adjustedInitialDays.double;
-      this.adjustInitialDaysForParent(adjustedInitialDays.father, 'father');
-      this.adjustInitialDaysForParent(adjustedInitialDays.mother, 'mother');
+   getInitialLowLevelDays() {
+      const extraDays = (this.tuplet - 1) * 45;
+      return 45 + extraDays;
    }
 
-   /**
-    * Adjust number of days left, depending on initial days current days left
-    * @param {adjustedInitialDays} adjustedInitialDays - An object with initial high and low 
-    *    level days for the father and mother respectively.
-    */
-   adjustInitialDaysForParent(adjustedInitialDays, parent) {
-      this[parent].transferable.low = adjustedInitialDays.low;
+   distributeHighLevelDays(days, parent) {
       const initialTransferableHighLevelDays = this.getInitialTransferableHighLevelDays()
-      if (adjustedInitialDays.high > initialTransferableHighLevelDays)
+      if (days.high > initialTransferableHighLevelDays)
       {
          this[parent].transferable.high = initialTransferableHighLevelDays;
-         this[parent].reserved = adjustedInitialDays.high - initialTransferableHighLevelDays;
+         this[parent].reserved = days.high - initialTransferableHighLevelDays;
       }
       else
       {
-         this[parent].transferable.high = adjustedInitialDays.high;
+         this[parent].transferable.high = days.high;
          this[parent].reserved = 0;
       }
    }
 
-   setAdjustedInitialDays(adjustedInitialDays) {
-      this.adjustedInitialDays = adjustedInitialDays;
-      this.adjustForAdjustedInitialDays(this.adjustedInitialDays, this.tuplet);
+   setAllDays(days) {
+      if (days.double)
+      {
+         this.double = days.double;
+      }
+      this.mother.transferable.low = days.mother.low;
+      this.father.transferable.low = days.father.low;
+      this.distributeHighLevelDays(days.father, 'father');
+      this.distributeHighLevelDays(days.mother, 'mother');
     }
 
-    getAdjustedInitialDays() {
+    getAllDays() {
       return {
          double: this.getDoubleDaysLeft(),
          mother: {
@@ -177,16 +159,16 @@ class ParentalLeaveDays {
 
     getDoubleDaysLeft()
     {
-      return this.doubleDaysLeft;
+      return this.double;
     }
 
     deductDoubleDays(numberOfDays)
     {
-      this.doubleDaysLeft -= numberOfDays;
+      this.double -= numberOfDays;
     }
 
     addDoubleDay() {
-      this.doubleDaysLeft++;
+      this.double++;
    }
 }
 
