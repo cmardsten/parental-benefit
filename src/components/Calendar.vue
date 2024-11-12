@@ -105,9 +105,6 @@ const ratios = [
    { id: 6, ratio: '0' },
 ];
 
-var startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
-var startOfNextYear = new Date(new Date().getFullYear() + 2, 0, 1).toISOString().slice(0, 10);
-
 const calendarOptions = computed(() => ({
    ...FullCalendar.options,
    plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
