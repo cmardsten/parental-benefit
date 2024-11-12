@@ -225,6 +225,11 @@ const generatePattern = () => {
          }
          if (isDoubleDay(currentDateString, child.id)) {
             doubleDays++;
+            if (child.getDoubleDaysExpiryDate() <= currentDate)
+            {
+               alert(`Validation failed: The other parent already has a leave scheduled for ${child.name} on ${currentDateString}. Double days are not allowed when the child is above 15 months. Please review the dates and try again.`);
+               return;
+            }
          }
       }
    }
@@ -279,7 +284,7 @@ const generatePattern = () => {
          events.value.push(newEvent);
       }
    }
-   saveEvents();
+   saveDays();
 }
 
 const removeEvent = (id) => {
@@ -294,7 +299,12 @@ const removeEvent = (id) => {
       }
       events.value = events.value.filter(e => e.id != id);
    }
+   saveDays();
+};
+
+const saveDays = () => {
    saveEvents();
+   saveChildren();
 };
 
 const saveEvents = () => {
@@ -342,7 +352,6 @@ const clearCalendar = () => {
          const id = events.value[events.value.length - 1].id;
          removeEvent(id);
       }
-      saveEvents();
    }
 }
 
