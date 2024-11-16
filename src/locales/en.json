@@ -36,7 +36,7 @@
    "weeks": "weeks",
    "OK": "OK",
    "generatePattern": "Generate pattern",
-   "warningClearAllPatterns": "Warning: This will clear all patterns for all parents. Do you want to continue?",
+   "warningClearAllPatternsForParent": "Warning: This will clear all patterns for ${parentName}. Do you want to continue?",
    "doYouWantToRemoveTheParentalDay": "Do you want to remove the parental day?",
    "validationFailedDayAlreadyScheduled": "Validation failed: Parent already has a leave scheduled on {currentDateString}. Please review the dates and try again.",
    "validationFailedDoubleDayAfter15Months": "Validation failed: The other parent already has a leave scheduled for {childname} on ${currentDateString}. Double days are not allowed when the child is above 15 months. Please review the dates and try again.",

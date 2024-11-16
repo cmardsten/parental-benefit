@@ -354,10 +354,12 @@ const saveLanguage = () => {
 
 // Clear events from Local Storage and events ref
 const clearCalendar = () => {
-   if (confirm(t('warningClearAllPatterns'))) {
-      while (events.value.length) {
-         const id = events.value[events.value.length - 1].id;
-         removeEvent(id);
+   if (confirm(t('warningClearAllPatternsForParent', { parentName: selectedParent.value.name }))) {
+      for (let ii = events.value.length - 1; ii >= 0; ii--) {
+         if (events.value[ii].parentId === selectedParent.value.id) {
+            const id = events.value[ii].id;
+            removeEvent(id);
+         }
       }
    }
 }
@@ -475,7 +477,6 @@ onMounted(() => {
          <div v-if="activeTab === 'pattern'" class="settings-form">
             <form v-if="children.length > 0 && (parents.mother.isDefined || parents.father.isDefined)" @submit.prevent>
                <div>
-                  <button @click="clearCalendar">{{ $t('clearAllScheduledDays') }}</button>
                </div>
                <!-- Person Selector -->
                <label for="person">{{ $t('parent') }}:</label>
@@ -483,6 +484,7 @@ onMounted(() => {
                   <option v-if="parents.mother.isDefined" :value="parents.mother">{{ parents.mother.name }}</option>
                   <option v-if="parents.father.isDefined" :value="parents.father">{{ parents.father.name }}</option>
                </select>
+               <button @click="clearCalendar">{{ $t('clearAllScheduledDays') }}</button>
                <div v-if="children.length > 1">
                   <label for="child">{{ $t('child') }}:</label>
                   <select v-model="selectedChild">

@@ -36,7 +36,7 @@
    "weeks": "veckor",
    "OK": "OK",
    "generatePattern": "Generera ledighet",
-   "warningClearAllPatterns": "Varning: Vill du radera alla schemalagda dagar för alla föräldrar?",
+   "warningClearAllPatternsForParent": "Varning: Vill du radera alla schemalagda dagar för {parentName}?",
    "doYouWantToRemoveTheParentalDay": "Vill du ta bort föräldradagen?",
    "validationFailedDayAlreadyScheduled": "Validering misslyckades: Föräldern har redan en schemalagd föräldradag {currentDateString}. Var vänlig att justera datumen och försök igen.",
    "validationFailedDoubleDayAfter15Months": "Validering misslyckades: Den andra föräldern har redan en schemalagd föräldradag {currentDateString} för {childname}. Dubbeldagar är inte tillåtet när barnet är över 15 månader. Vänligen justera datum och försök igen.",
