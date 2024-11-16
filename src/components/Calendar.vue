@@ -20,8 +20,8 @@ const editChildren = ref(-1);
 const adjustedDays = ref(null);
 
 const parents = ref({
-   father: { isDefined: false, name: '', salary: 0 },
-   mother: { isDefined: false, name: '', salary: 0 }
+   father: { isDefined: false, name: '', salary: 0, id: 0 },
+   mother: { isDefined: false, name: '', salary: 0, id: 1 }
 });
 const selectedParent = ref(null);
 const selectedChild = ref(null);
@@ -280,6 +280,7 @@ const generatePattern = () => {
             isLowLevel: isLowLevel,
             pay: pay,
             childId: child.id,
+            parentId: selectedParent.value.id,
             id: highestEventId,
          };
          highestEventId++;
@@ -418,11 +419,28 @@ const addParent = (parent) => {
    saveParents();
 }
 
+const updateSchema = () => {
+   if (parents.value.mother.isDefined) {
+      if (!("id" in parents.value.mother)) {
+         parents.value.mother.id = 1;
+         saveParents();
+      }
+   }
+   if (parents.value.father.isDefined) {
+      if (!("id" in parents.value.father)) {
+         parents.value.father.id = 0;
+         saveParents();
+      }
+   }
+   console.log(parents.value);
+}
+
 // Load events automatically when the component is mounted
 onMounted(() => {
    loadParents();
    loadChildren();
    loadCalendar();
+   updateSchema();
    if (parents.value.mother.isDefined) {
       selectedParent.value = parents.value.mother;
    } else if (parents.value.father.isDefined) {
