@@ -222,14 +222,13 @@ const generatePattern = () => {
          }
          const currentDateString = currentDate.toISOString().split('T')[0]
          if (isDayTaken(currentDateString, parent)) {
-            alert(t('validationFailedDayAlreadyScheduled', {currentDateString: currentDateString}));
+            alert(t('validationFailedDayAlreadyScheduled', { currentDateString: currentDateString }));
             return;
          }
          if (isDoubleDay(currentDateString, child.id)) {
             doubleDays++;
-            if (child.getDoubleDaysExpiryDate() <= currentDate)
-            {
-               alert(t('validationFailedDoubleDayAfter15Months', {childname: child.name, currentDateString: currentDateString}));
+            if (child.getDoubleDaysExpiryDate() <= currentDate) {
+               alert(t('validationFailedDoubleDayAfter15Months', { childname: child.name, currentDateString: currentDateString }));
                return;
             }
          }
@@ -238,16 +237,16 @@ const generatePattern = () => {
    if (doubleDays > child.parentalLeaveDays.getDoubleDaysLeft()) {
       validationFailed = true;
       const diff = doubleDays - child.parentalLeaveDays.getDoubleDaysLeft();
-      alert(t('validationFailedOutOfDoubleDays', {missingDays: diff}));
+      alert(t('validationFailedOutOfDoubleDays', { missingDays: diff }));
    }
    if (lowLevelDays > child.parentalLeaveDays.getLowLevelDaysLeft(parent)) {
       validationFailed = true;
       const diff = lowLevelDays - child.parentalLeaveDays.getLowLevelDaysLeft(parent)
-      alert(t('validationFailedOutOfMinimumLevelDays', {missingDays: diff}));
+      alert(t('validationFailedOutOfMinimumLevelDays', { missingDays: diff }));
    }
    if (highLevelDays > child.parentalLeaveDays.getHighLevelDaysLeft(parent)) {
       const diff = highLevelDays - child.parentalLeaveDays.getHighLevelDaysLeft(parent);
-      alert(t('validationFailedOutOfSicknessBenefitLevelDays', {missingDays: diff}));
+      alert(t('validationFailedOutOfSicknessBenefitLevelDays', { missingDays: diff }));
       validationFailed = true;
    }
    if (validationFailed) {
@@ -434,7 +433,6 @@ const updateSchema = () => {
          saveParents();
       }
    }
-   console.log(parents.value);
 }
 
 // Load events automatically when the component is mounted
@@ -528,8 +526,7 @@ onMounted(() => {
                         <span>
                            =
                            <input type="number" :value="repeatDuration"
-                              @input="updateDates('repeatDuration', $event.target.value)"
-                              min=0 style="width: 2.5em;" />
+                              @input="updateDates('repeatDuration', $event.target.value)" min=0 style="width: 2.5em;" />
                            <label for="repeatDuration">{{ $t('weeks') }}</label>
                         </span>
                      </td>
@@ -573,12 +570,14 @@ onMounted(() => {
                      <div v-if="editChildren == child.id">
                         <input type="number" v-model="adjustedDays.double" />
                      </div>
-                     <p v-else>{{ child.remainingDays.double }} ({{ $t('validTo') }} {{ child.remainingDays.doubleDaysExpiration
-                        }})</p>
+                     <p v-else>{{ child.remainingDays.double }} ({{ $t('validTo') }} {{
+               child.remainingDays.doubleDaysExpiration
+            }})</p>
                   </div>
                   <div>
                      <button v-if="editChildren == child.id" @click="updateChild(child.id)">{{ $t('OK') }}</button>
-                     <button v-if="editChildren == child.id" @click="removeChild(child.id)">{{ $t('removeChild') }}</button>
+                     <button v-if="editChildren == child.id" @click="removeChild(child.id)">{{ $t('removeChild')
+                        }}</button>
                      <button v-else @click="editChild(child.id)">{{ $t('edit') }}</button>
                   </div>
                </div>
@@ -665,13 +664,13 @@ onMounted(() => {
 }
 
 .calendar {
-   border: 1px solid #ddd;
+   border: 1px solid #dddddd;
    padding: 15px;
    border-radius: 8px;
 }
 
 .settings-form {
-   border: 1px solid #ddd;
+   border: 1px solid #dddddd;
    padding: 15px;
    background-color: #f9f9f9;
    border-radius: 8px;
@@ -738,5 +737,38 @@ input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
    -webkit-appearance: none;
    margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+   .summary-box {
+      align-self: flex-start;
+      border: 1px solid #333333;
+      background-color: #222222;
+   }
+
+   .settings-form {
+      border: 1px solid #333333;
+      background-color: #222222;
+   }
+
+   button,
+   select,
+   input {
+      background-color: #333333;
+      color: #dddddd;
+      border: 1px solid #555;
+      transition: background-color 0.2s, border-color 0.2s;
+   }
+
+   button:hover,
+   select:hover,
+   input:hover {
+      background-color: #555555;
+      border-color: #777777;
+   }
+
+   button:active {
+      background-color: #222;
+   }
 }
 </style>
