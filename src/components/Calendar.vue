@@ -4,12 +4,15 @@ import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth'
+import svLocale from '@fullcalendar/core/locales/sv';
 import { Child } from '../Child';
 import { ParentalLeaveDays } from '../ParentalLeaveDays';
+import { useI18n } from 'vue-i18n';
 
-
+const { t, locale } = useI18n();
 
 const activeTab = ref('pattern');
+const language = ref(null);
 
 const today = new Date();
 const newChild = ref({ name: "", birthdate: new Date().toISOString().substring(0, 10) });
@@ -107,13 +110,15 @@ const ratios = [
 
 const calendarOptions = computed(() => ({
    ...FullCalendar.options,
+   locales: svLocale,
+   locale: locale.value,
    plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
    initialView: 'multiMonthCustomYear',
    views: {
       multiMonthCustomYear: {
          type: 'multiMonth',
          duration: { months: 12 },
-         buttonText: 'year'
+         buttonText: t('year')
       }
    },
    headerToolbar: {
@@ -124,7 +129,7 @@ const calendarOptions = computed(() => ({
    events: events.value,
    eventClick: function (info) {
       info.jsEvent.preventDefault(); // don't let the browser navigate
-      if (confirm("Do you want to remove the parental day?") == true) {
+      if (confirm(t('doYouWantToRemoveTheParentalDay')) == true) {
          removeEvent(info.event.id);
       };
    },
@@ -217,14 +222,14 @@ const generatePattern = () => {
          }
          const currentDateString = currentDate.toISOString().split('T')[0]
          if (isDayTaken(currentDateString, parent)) {
-            alert(`Validation failed: Parent already has a leave scheduled on ${currentDateString}. Please review the dates and try again.`);
+            alert(t('validationFailedDayAlreadyScheduled', {currentDateString: currentDateString}));
             return;
          }
          if (isDoubleDay(currentDateString, child.id)) {
             doubleDays++;
             if (child.getDoubleDaysExpiryDate() <= currentDate)
             {
-               alert(`Validation failed: The other parent already has a leave scheduled for ${child.name} on ${currentDateString}. Double days are not allowed when the child is above 15 months. Please review the dates and try again.`);
+               alert(t('validationFailedDoubleDayAfter15Months', {childname: child.name, currentDateString: currentDateString}));
                return;
             }
          }
@@ -233,16 +238,16 @@ const generatePattern = () => {
    if (doubleDays > child.parentalLeaveDays.getDoubleDaysLeft()) {
       validationFailed = true;
       const diff = doubleDays - child.parentalLeaveDays.getDoubleDaysLeft();
-      alert(`Validation failed: ${diff} additional double days are required. Please adjust the schedule and try again.`);
+      alert(t('validationFailedOutOfDoubleDays', {missingDays: diff}));
    }
    if (lowLevelDays > child.parentalLeaveDays.getLowLevelDaysLeft(parent)) {
       validationFailed = true;
       const diff = lowLevelDays - child.parentalLeaveDays.getLowLevelDaysLeft(parent)
-      alert(`Validation failed: ${diff} additional minimum-level days are required. Please adjust the schedule or transfer days and try again.`)
+      alert(t('validationFailedOutOfMinimumLevelDays', {missingDays: diff}));
    }
    if (highLevelDays > child.parentalLeaveDays.getHighLevelDaysLeft(parent)) {
       const diff = highLevelDays - child.parentalLeaveDays.getHighLevelDaysLeft(parent);
-      alert(`Validation failed: ${diff} additional sickness benefit level days are required. Please adjust the schedule or transfer days and try again.`)
+      alert(t('validationFailedOutOfSicknessBenefitLevelDays', {missingDays: diff}));
       validationFailed = true;
    }
    if (validationFailed) {
@@ -342,9 +347,13 @@ const loadParents = () => {
    }
 }
 
+const saveLanguage = () => {
+   localStorage.setItem('locale', locale.value);
+}
+
 // Clear events from Local Storage and events ref
 const clearCalendar = () => {
-   if (confirm("Warning: This will clear all patterns for all parents. Do you want to continue?")) {
+   if (confirm(t('warningClearAllPatterns'))) {
       while (events.value.length) {
          const id = events.value[events.value.length - 1].id;
          removeEvent(id);
@@ -434,34 +443,39 @@ onMounted(() => {
             <FullCalendar :options="calendarOptions" />
          </div>
          <div class="tabs">
-            <button @click="activeTab = 'pattern'">Pattern Settings</button>
-            <button @click="activeTab = 'child'">Children</button>
-            <button @click="activeTab = 'parents'">Parents</button>
+            <button @click="activeTab = 'pattern'">{{ $t('scheduleLeave') }}</button>
+            <button @click="activeTab = 'child'">{{ $t('children') }}</button>
+            <button @click="activeTab = 'parents'">{{ $t('parents') }}</button>
+            <label for="language">{{ $t('language') }}</label>
+            <select v-model="$i18n.locale" @change="saveLanguage">
+               <option value='sv'>Svenska</option>
+               <option value='en'>English</option>
+            </select>
          </div>
 
          <!-- Generate pattern tab -->
          <div v-if="activeTab === 'pattern'" class="settings-form">
             <form v-if="children.length > 0 && (parents.mother.isDefined || parents.father.isDefined)" @submit.prevent>
                <div>
-                  <button @click="clearCalendar">Clear all patterns</button>
+                  <button @click="clearCalendar">{{ $t('clearAllScheduledDays') }}</button>
                </div>
                <!-- Person Selector -->
-               <label for="person">Parent:</label>
+               <label for="person">{{ $t('parent') }}:</label>
                <select v-model="selectedParent">
                   <option v-if="parents.mother.isDefined" :value="parents.mother">{{ parents.mother.name }}</option>
                   <option v-if="parents.father.isDefined" :value="parents.father">{{ parents.father.name }}</option>
                </select>
                <div v-if="children.length > 1">
-                  <label for="child">Child:</label>
+                  <label for="child">{{ $t('child') }}:</label>
                   <select v-model="selectedChild">
                      <option v-for="child in children" :value="child">{{ child.name }}</option>
                   </select>
                </div>
                <div v-else>
-                  <label for="child">Child:</label>
+                  <label for="child">{{ $t('child') }}:</label>
                   {{ selectedChild.name }}
                </div>
-               <h3>Weekly Pattern</h3>
+               <h3>{{ $t('weeklyPattern') }}</h3>
                <table class="pattern-table">
                   <tr v-for="day in weekDays" :key="day">
                      <td>{{ day }}</td>
@@ -472,14 +486,14 @@ onMounted(() => {
                         </select>
                         <div class="low-level-checkbox">
                            <input type="checkbox" v-model="pattern[day].isLowLevel" />
-                           <label>Low-Level Day</label>
+                           <label>{{ $t('minimumLevel') }}</label>
                         </div>
                      </td>
                   </tr>
                   <!-- Repeat Duration -->
                   <tr>
                      <td>
-                        <label for="startDate">Start date</label>
+                        <label for="startDate">{{ $t('startDate') }}</label>
                      </td>
                      <td>
                         <input type="date" :value="startDate" @input="updateDates('startDate', $event.target.value)" />
@@ -487,110 +501,111 @@ onMounted(() => {
                   </tr>
                   <tr>
                      <td>
-                        <label for="endDate">End date</label>
+                        <label for="endDate">{{ $t('endDate') }}</label>
                      </td>
                      <td>
                         <input type="date" :value="endDate" @input="updateDates('endDate', $event.target.value)" />
                         <span>
                            =
                            <input type="number" :value="repeatDuration"
-                              @input="updateDates('repeatDuration', $event.target.value)" placeholder="Number of weeks"
+                              @input="updateDates('repeatDuration', $event.target.value)"
                               min=0 style="width: 2.5em;" />
-                           <label for="repeatDuration">weeks</label>
+                           <label for="repeatDuration">{{ $t('weeks') }}</label>
                         </span>
                      </td>
                   </tr>
                </table>
-               <button type="submit" @click="generatePattern">Generate Pattern</button>
+               <button type="submit" @click="generatePattern">{{ $t('generatePattern') }}</button>
             </form>
             <div v-else>
-               <p>Pattern generation not possible:</p>
-               <p v-if="children.length == 0">No child added.</p>
-               <p v-if="!parents.father.isDefined && !parents.mother.isDefined">No parent added.</p>
+               <p>{{ $t('patternGenerationNotPossible') }}:</p>
+               <p v-if="children.length == 0">{{ $t('noChildAdded') }}.</p>
+               <p v-if="!parents.father.isDefined && !parents.mother.isDefined">{{ $t('noParentAdded') }}.</p>
             </div>
          </div>
 
          <!-- Children tab -->
          <div v-if="activeTab === 'child'" class="settings-form">
-            <h2>Children</h2>
+            <h2>{{ $t('children') }}</h2>
             <div v-if=children>
                <div v-for="child in childrenWithRemainingDays" :key="child.name">
                   <h4>{{ child.birthdate }} : {{ child.name }}</h4>
-                  <p>Sickness Benefit Level Days Left:</p>
+                  <p>{{ $t('daysLeftOn') }}:</p>
                   <div v-if="editChildren == child.id">
-                     <label>Father:</label>
+                     <p>{{ $t('sicknessBenefitLevel') }}:</p>
+                     <label>{{ $t('father') }}:</label>
                      <input type="number" v-model="adjustedDays.father.high" />
-                     <label>Mother:</label>
+                     <label>{{ $t('mother') }}:</label>
                      <input type="number" v-model="adjustedDays.mother.high" />
                   </div>
-                  <p v-else>{{ child.remainingDays.high }}</p>
-                  <p>Low Level Days Left:</p>
+                  <p v-else>{{ $t('sicknessBenefitLevel') }}: {{ child.remainingDays.high }}</p>
                   <div v-if="editChildren == child.id">
-                     <label>Father:</label>
+                     <p>{{ $t('minimumLevel') }}:</p>
+                     <label>{{ $t('father') }}:</label>
                      <input type="number" v-model="adjustedDays.father.low" />
-                     <label>Mother:</label>
+                     <label>{{ $t('mother') }}:</label>
                      <input type="number" v-model="adjustedDays.mother.low" />
 
                   </div>
-                  <p v-else>{{ child.remainingDays.low }}</p>
+                  <p v-else>{{ $t('minimumLevel') }}: {{ child.remainingDays.low }}</p>
                   <div v-if="child.tuplet == 1">
-                     <p> Double Days Left:</p>
+                     <p> {{ $t('doubleDaysLeft') }}:</p>
                      <div v-if="editChildren == child.id">
                         <input type="number" v-model="adjustedDays.double" />
                      </div>
-                     <p v-else>{{ child.remainingDays.double }} (valid to {{ child.remainingDays.doubleDaysExpiration
+                     <p v-else>{{ child.remainingDays.double }} ({{ $t('validTo') }} {{ child.remainingDays.doubleDaysExpiration
                         }})</p>
                   </div>
                   <div>
-                     <button v-if="editChildren == child.id" @click="updateChild(child.id)">OK</button>
-                     <button v-if="editChildren == child.id" @click="removeChild(child.id)">Remove child</button>
-                     <button v-else @click="editChild(child.id)">Edit</button>
+                     <button v-if="editChildren == child.id" @click="updateChild(child.id)">{{ $t('OK') }}</button>
+                     <button v-if="editChildren == child.id" @click="removeChild(child.id)">{{ $t('removeChild') }}</button>
+                     <button v-else @click="editChild(child.id)">{{ $t('edit') }}</button>
                   </div>
                </div>
             </div>
             <h3>Add child</h3>
-            <label for="childName">Child's Name:</label>
+            <label for="childName">{{ $t('name') }}:</label>
             <input type="text" v-model="newChild.name" placeholder="Enter child's name" />
 
-            <label for="birthdate">Birthdate:</label>
+            <label for="birthdate">{{ $t('birthdate') }}:</label>
             <input type="date" v-model="newChild.birthdate" />
 
-            <button @click="addChild">Add Child</button>
+            <button @click="addChild">{{ $t('add') }}</button>
          </div>
 
          <!-- Parents tab -->
          <div v-if="activeTab === 'parents'" class="settings-form">
-            <h2>Parents</h2>
+            <h2>{{ $t('parents') }}</h2>
             <div v-if="parents.father.isDefined">
-               <h4>Father: {{ parents.father.name }}</h4>
-               <p>Monthly Salary: {{ parents.father.salary }}</p>
-               <button @click="parents.father.isDefined = false">Edit</button>
+               <h4>{{ $t('father') }}: {{ parents.father.name }}</h4>
+               <p>{{ $t('monthlySalary') }}: {{ parents.father.salary }}</p>
+               <button @click="parents.father.isDefined = false">{{ $t('edit') }}</button>
             </div>
             <div v-else>
-               <label for="parentName">Father's Name:</label>
+               <label for="parentName">{{ $t('name') }}:</label>
                <input type="text" v-model="parents.father.name" placeholder="Enter fathers's name" />
 
-               <label for="salary">Monthly&nbspSalary:</label>
+               <label for="salary">{{ $t('monthlySalary') }}:</label>
                <input type="number" min=0 v-model="parents.father.salary"
                   placeholder="Enter fathers's monthly salary" />
 
-               <button @click="addParent('father')">Add Father</button>
+               <button @click="addParent('father')">{{ $t('add') }}</button>
             </div>
 
             <div v-show="parents.mother.isDefined">
-               <h4>Mother: {{ parents.mother.name }}</h4>
-               <p>Monthly Salary: {{ parents.mother.salary }}</p>
+               <h4>{{ $t('mother') }}: {{ parents.mother.name }}</h4>
+               <p>{{ $t('monthlySalary') }}: {{ parents.mother.salary }}</p>
                <button @click="parents.mother.isDefined = false">Edit</button>
             </div>
             <div v-show="!parents.mother.isDefined">
-               <label for="parentName">Mother's Name:</label>
+               <label for="parentName">{{ $t('name') }}:</label>
                <input type="text" v-model="parents.mother.name" placeholder="Enter mothers's name" />
 
-               <label for="salary">Monthly&nbspSalary:</label>
+               <label for="salary">{{ $t('monthlySalary') }}:</label>
                <input type="number" min=0 v-model="parents.mother.salary"
                   placeholder="Enter mothers's monthly salary" />
 
-               <button @click="addParent('mother')">Add Mother</button>
+               <button @click="addParent('mother')">{{ $t('add') }}</button>
             </div>
 
          </div>
@@ -598,14 +613,14 @@ onMounted(() => {
 
       <!-- Information Box -->
       <div class="summary-box">
-         <h3>Total pay</h3>
+         <h3>{{ $t('totalPay') }}</h3>
          <p v-if="parents.father.isDefined">
             {{ parents.father.name }}: {{ totalPay.father.toFixed(0) }}
          </p>
          <p v-if="parents.mother.isDefined">
             {{ parents.mother.name }}: {{ totalPay.mother.toFixed(0) }}
          </p>
-         <h3>Days left</h3>
+         <h3>{{ $t('daysLeft') }}</h3>
          <p v-if="parents.father.isDefined">
             {{ parents.father.name }}: H {{ totalRemainingDays.father.high }} L {{ totalRemainingDays.father.low }}
          </p>

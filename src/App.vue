@@ -4,7 +4,7 @@ import Calendar from './components/Calendar.vue';
 
 <template>
   <div id="app">
-    <h1>Föräldraledighetskalender</h1><br>
+    <h1> {{ $t('parentalLeaveCalendar') }}</h1><br>
     <div id="calendar-div">
     <Calendar />
     </div>
