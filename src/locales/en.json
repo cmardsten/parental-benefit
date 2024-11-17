@@ -1,10 +1,12 @@
 {
    "parentalLeaveCalendar": "Parental Leave Calendar",
+   "addParent": "Add parent",
    "children": "Children",
    "parents": "Parents",
    "parent": "Parent",
    "addChild": "Add child",
    "removeChild": "Remove child",
+   "remove": "Remove",
    "daysLeft": "Days left",
    "daysLeftOn": "Days left on",
    "sicknessBenefitLevel": "Sickness benefit level",

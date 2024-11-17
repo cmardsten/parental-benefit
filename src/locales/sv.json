@@ -1,10 +1,12 @@
 {
    "parentalLeaveCalendar": "Föräldraledighetskalender",
    "children": "Barn",
+   "addParent": "Lägg till förälder",
    "parents": "Föräldrar",
    "parent": "Förälder",
    "addChild": "Lägg till barn",
    "removeChild": "Ta bort barn",
+   "remove": "Ta bort",
    "daysLeft": "Dagar kvar",
    "daysLeftOn": "Dagar kvar på",
    "sicknessBenefitLevel": "Sjukpenningnivå",

@@ -12,7 +12,7 @@ class Child {
    tupletify(name) {
       this.name = `${this.name} & ${name}`;
       this.tuplet++;
-      this.parentalLeaveDays = new ParentalLeaveDays(this.tuplet);
+      this.parentalLeaveDays = new ParentalLeaveDays(this.parentalLeaveDays.parentIds, this.tuplet);
    }
 
    getDoubleDaysExpiryDate() {

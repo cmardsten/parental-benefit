@@ -1,28 +1,49 @@
 class ParentalLeaveDays {
-   constructor(tuplet, days=false) {
+   constructor(parentIds, tuplet=1) {
       this.tuplet = tuplet;
-      this.mother = {
-         reserved: 90,
-         transferable: {
-            high: this.getInitialTransferableHighLevelDays(),
-            low: this.getInitialLowLevelDays()
-         }
-      };
-      this.father = {
-         reserved: 90,
-         transferable: {
-            high: this.getInitialTransferableHighLevelDays(),
-            low: this.getInitialLowLevelDays()
-         }
-      };
       this.double = this.tuplet == 1 ? 60 : Infinity;
-      if (days)
-      {
-         this.mother = days.mother;
-         this.father = days.father;
-         this.double = days.double;
+      this.parentIds = parentIds;
+      this.days = {}
+      if (parentIds.length == 1) {
+         this.days[parentId] = {
+            reserved: 90,
+            transferable: {
+               high: this.getInitialTransferableHighLevelDays() * 2,
+               low: this.getInitialLowLevelDays() * 2
+            }
+         }
+      } else {
+         for (const parentId in parentIds) {
+            this.days[parentId] = {
+               reserved: 90,
+               transferable: {
+                  high: this.getInitialTransferableHighLevelDays(),
+                  low: this.getInitialLowLevelDays()
+               }
+            }
+         }
       }
    }
+
+   initializeFromObject(parentalLeaveDays)
+   {
+      this.tuplet = parentalLeaveDays.tuplet;
+      this.double = parentalLeaveDays.double;
+      this.parentIds = parentalLeaveDays.parentIds;
+      this.days = parentalLeaveDays.days;
+   }
+
+   initializeDaysForParent(parentId, reservedDays, transferableDays) {
+      if (!this.days[parentId]) {
+        this.days[parentId] = {
+          reserved: reservedDays || 90, // Default to 90 if not provided
+          transferable: {
+            high: transferableDays?.high || 0,
+            low: transferableDays?.low || 0,
+          },
+        };
+      }
+    }
 
    /**
     * Adds leave days for a specific type (high or low level) to the transferable or reserved pool
@@ -31,81 +52,93 @@ class ParentalLeaveDays {
     * @param {number} days - The number of days to add
     * @param {boolean} isLowLevel - The day type, true for low-level
     */
-   addDays(parent, days, isLowLevel) {
+   addDays(parentId, days, isLowLevel) {
       if (isLowLevel) {
          // Transferable low level days
-         if (this[parent].transferable.low < 90) {
-            const availableToReserve = 90 - this[parent].transferable.low;
+         if (this.days[parentId].transferable.low < 90) {
+            const availableToReserve = 90 - this.days[parentId].transferable.low;
             const daysToReserve = Math.min(days, availableToReserve);
-            this[parent].transferable.low += daysToReserve;
+            this.days[parentId].transferable.low += daysToReserve;
          }
       }
       else {
          let remainingDays = days;
          // Reserved days
-         if (this[parent].reserved < 90) {
-            const availableToReserve = 90 - this[parent].reserved;
+         if (this.days[parentId].reserved < 90) {
+            const availableToReserve = 90 - this.days[parentId].reserved;
             const daysToReserve = Math.min(days, availableToReserve);
-            this[parent].reserved += daysToReserve;
+            this.days[parentId].reserved += daysToReserve;
             remainingDays -= daysToReserve;
          }
          // Transferable high level days
          if (remainingDays > 0) {
-            this[parent].transferable.high += remainingDays;
+            this.days[parentId].transferable.high += remainingDays;
          }
       }
    }
 
    /**
     * Deducts leave days from the appropriate pool.
-    * @param {string} parent - The parent to add days for
+    * @param {string} parentId - The parent to add days for
     * @param {string} days - The number of days to deduct
     * @param {boolean} isLowLevel - The number of days to deduct
     */
-   deductDays(parent, days, isLowLevel) {
+   deductDays(parentId, days, isLowLevel) {
       // Subtract a day from the specified parent and day type
       if (isLowLevel) {
-         if (this[parent].transferable.low >= days) {
-            this[parent].transferable.low -= days;
+         if (this.days[parentId].transferable.low >= days) {
+            this.days[parentId].transferable.low -= days;
          }
          else {
             alert("No low days left. You need to transfer days.");
          }
       }
       else {
-         if (this[parent].reserved >= days) {
-            this[parent].reserved -= days;
+         if (this.days[parentId].reserved >= days) {
+            this.days[parentId].reserved -= days;
          }
-         else if (this[parent].transferable.high >= days) {
-            this[parent].transferable.high -= days;
+         else if (this.days[parentId].transferable.high >= days) {
+            this.days[parentId].transferable.high -= days;
          }
       }
    }
 
-   /**
-    * Gets the total days left for a specific type
-    * @param {string} parent - The parent to calculate days left for
-    * @returns {number} Total days left of the specified type
-    */
-   getLowLevelDaysLeft(parent) {
-      return this[parent].transferable.low;
-   }
-
    getTotalLowLevelDaysLeft() {
-      return this.mother.transferable.low + this.father.transferable.low;
+      let totalLowLevelDays = 0;
+      for (const parentId in this.days) {
+         if (this.days.hasOwnProperty(parentId)) {
+            totalLowLevelDays += this.days[parentId].transferable.low;
+         }
+      }
+      return totalLowLevelDays;
    }
 
    getTotalHighLevelDaysLeft() {
-      return this.getHighLevelDaysLeft('father') + this.getHighLevelDaysLeft('mother');
+      let totalHighLevelDays = 0;
+      for (const parentId in this.days) {
+         if (this.days.hasOwnProperty(parentId)) {
+            totalHighLevelDays += this.days[parentId].transferable.high + this.days[parentId].reserved;
+         }
+      }
+      return totalHighLevelDays;
    }
 
-   /**
-    * Gets the total days left for a specific type
-    * @param {string} parent - The parent to calculate days left for
-    * @returns {number} Total days left of the specified type
-    */
-   getHighLevelDaysLeft(parent) {
-      return this[parent].reserved + this[parent].transferable.high;
+   getLowLevelDaysLeft(parentId) {
+      let days = 0;
+      if (parentId in this.days)
+      {
+         days = this.days[parentId].transferable.low
+      }
+      return days;
+   }
+
+   getHighLevelDaysLeft(parentId) {
+      let days = 0;
+      if (parentId in this.days)
+      {
+         days = this.days[parentId].reserved + this.days[parentId].transferable.high
+      }
+      return days;
    }
 
    getInitialTransferableHighLevelDays() {
@@ -118,48 +151,47 @@ class ParentalLeaveDays {
       return 45 + extraDays;
    }
 
-   distributeHighLevelDays(days, parent) {
+   distributeHighLevelDays(days, parentId) {
       const initialTransferableHighLevelDays = this.getInitialTransferableHighLevelDays()
-      if (days.high > initialTransferableHighLevelDays)
+      if (days > initialTransferableHighLevelDays)
       {
-         this[parent].transferable.high = initialTransferableHighLevelDays;
-         this[parent].reserved = days.high - initialTransferableHighLevelDays;
+         this.days[parentId].transferable.high = initialTransferableHighLevelDays;
+         this.days[parentId].reserved = days - initialTransferableHighLevelDays;
       }
       else
       {
-         this[parent].transferable.high = days.high;
-         this[parent].reserved = 0;
+         this.days[parentId].transferable.high = days;
+         this.days[parentId].reserved = 0;
       }
    }
 
    setAllDays(days) {
-      if (days.double)
-      {
-         this.double = days.double;
+      console.log(days);
+      for (const ii in days) {
+         let parentId = days[ii].parentId;
+         if (this.days.hasOwnProperty(parentId)) {
+            this.days[parentId].transferable.low = days[ii].low;
+            this.distributeHighLevelDays(days[ii].high, parentId);
+         }
       }
-      this.mother.transferable.low = days.mother.low;
-      this.father.transferable.low = days.father.low;
-      this.distributeHighLevelDays(days.father, 'father');
-      this.distributeHighLevelDays(days.mother, 'mother');
     }
 
     getAllDays() {
-      return {
-         double: this.getDoubleDaysLeft(),
-         mother: {
-            high: this.getHighLevelDaysLeft('mother'),
-            low: this.getLowLevelDaysLeft('mother')
-         },
-         father: {
-            high: this.getHighLevelDaysLeft('father'),
-            low: this.getLowLevelDaysLeft('father')
-         }
-      };
+      return Object.entries(this.days).map(([parentId]) => ({
+        parentId,
+        high: this.getHighLevelDaysLeft(parentId),
+        low: this.getLowLevelDaysLeft(parentId)
+      }));
     }
 
     getDoubleDaysLeft()
     {
       return this.double;
+    }
+
+    setDoubleDaysLeft(doubleDays)
+    {
+      this.double = doubleDays;
     }
 
     deductDoubleDays(numberOfDays)

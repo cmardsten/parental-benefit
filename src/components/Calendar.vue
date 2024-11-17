@@ -16,28 +16,32 @@ const language = ref(null);
 
 const today = new Date();
 const newChild = ref({ name: "", birthdate: new Date().toISOString().substring(0, 10) });
+const newParent = ref({ name: "", salary: 0});
 const editChildren = ref(-1);
+const editParents = ref(-1);
 const adjustedDays = ref(null);
+const adjustedDoubleDays = ref(null);
 
-const parents = ref({
-   father: { isDefined: false, name: '', salary: 0, id: 0 },
-   mother: { isDefined: false, name: '', salary: 0, id: 1 }
-});
+const parents = ref([]);
 const selectedParent = ref(null);
+const children = ref([]);
 const selectedChild = ref(null);
 
-// Track the total remaining days for each parent across all children
+// Track the total remaining days for all parents across all children
 const totalRemainingDays = computed(() => {
-   return children.value.reduce(
-      (totals, child) => {
-         totals.mother.high += child.parentalLeaveDays.getHighLevelDaysLeft('mother');
-         totals.mother.low += child.parentalLeaveDays.getLowLevelDaysLeft('mother');
-         totals.father.high += child.parentalLeaveDays.getHighLevelDaysLeft('father');
-         totals.father.low += child.parentalLeaveDays.getLowLevelDaysLeft('father');
-         return totals;
-      },
-      { mother: { high: 0, low: 0 }, father: { high: 0, low: 0 }, double: 0 }
-   );
+   let totals = {};
+   parents.value.forEach((parent) => {
+      totals[parent.id] = { high: 0, low: 0 };
+   });
+
+   children.value.forEach((child) => {
+      parents.value.forEach((parent) => {
+         const parentId = parent.id;
+         totals[parentId].high += child.parentalLeaveDays.getHighLevelDaysLeft(parentId);
+         totals[parentId].low += child.parentalLeaveDays.getLowLevelDaysLeft(parentId);
+      });
+   });
+   return totals;
 });
 
 // Computed property to calculate remaining days for each child
@@ -55,8 +59,6 @@ const childrenWithRemainingDays = computed(() =>
       };
    })
 );
-
-const children = ref([]);
 
 const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 var pattern = ref({
@@ -135,8 +137,8 @@ const calendarOptions = computed(() => ({
    },
    eventDidMount: (info) => {
       // Add a class based on the event's person field
-      const parent = info.event.extendedProps.parent;
-      var parentClass = `parent-${parent}`;
+      const parentId = info.event.extendedProps.parentId;
+      var parentClass = `parent-${parentId}`;
       if (info.event.extendedProps.isLowLevel == true) {
          parentClass = parentClass.concat("-low");
       }
@@ -187,15 +189,15 @@ const calculateDayPay = (monthlySalary, percentage, isLowLevelDay, date) => {
    return pay;
 };
 
-const isDayTaken = (date, parent) => {
+const isDayTaken = (date, parentId) => {
    return events.value.some(event =>
-      event.start === date && event.parent === parent
+      event.start === date && event.parentId === parentId
    );
 };
 
-const isDoubleDay = (date, childId, parent) => {
+const isDoubleDay = (date, childId, parentId) => {
    return events.value.some(event =>
-      event.start === date && ((event.childId === childId) && (event.parent != parent))
+      event.start === date && ((event.childId === childId) && (event.parentId != parentId))
    );
 };
 
@@ -205,7 +207,7 @@ const generatePattern = () => {
    const start = new Date(startDate.value);
    const end = new Date(endDate.value);
    const child = children.value.find(child => child.id === selectedChild.value.id);
-   const parent = Object.keys(parents.value).find(key => parents.value[key].name === selectedParent.value.name);
+   const parent = parents.value.find(parent => parent.id === selectedParent.value.id);
    // Validate if there are enough days to create pattern
    let lowLevelDays = 0;
    let highLevelDays = 0;
@@ -221,11 +223,11 @@ const generatePattern = () => {
             highLevelDays = highLevelDays + percentage / 100;
          }
          const currentDateString = currentDate.toISOString().split('T')[0]
-         if (isDayTaken(currentDateString, parent)) {
+         if (isDayTaken(currentDateString, parent.id)) {
             alert(t('validationFailedDayAlreadyScheduled', { currentDateString: currentDateString }));
             return;
          }
-         if (isDoubleDay(currentDateString, child.id)) {
+         if (isDoubleDay(currentDateString, child.id, parent.id)) {
             doubleDays++;
             if (child.getDoubleDaysExpiryDate() <= currentDate) {
                alert(t('validationFailedDoubleDayAfter15Months', { childname: child.name, currentDateString: currentDateString }));
@@ -239,13 +241,13 @@ const generatePattern = () => {
       const diff = doubleDays - child.parentalLeaveDays.getDoubleDaysLeft();
       alert(t('validationFailedOutOfDoubleDays', { missingDays: diff }));
    }
-   if (lowLevelDays > child.parentalLeaveDays.getLowLevelDaysLeft(parent)) {
+   if (lowLevelDays > child.parentalLeaveDays.getLowLevelDaysLeft(parent.id)) {
       validationFailed = true;
-      const diff = lowLevelDays - child.parentalLeaveDays.getLowLevelDaysLeft(parent)
+      const diff = lowLevelDays - child.parentalLeaveDays.getLowLevelDaysLeft(parent.id)
       alert(t('validationFailedOutOfMinimumLevelDays', { missingDays: diff }));
    }
-   if (highLevelDays > child.parentalLeaveDays.getHighLevelDaysLeft(parent)) {
-      const diff = highLevelDays - child.parentalLeaveDays.getHighLevelDaysLeft(parent);
+   if (highLevelDays > child.parentalLeaveDays.getHighLevelDaysLeft(parent.id)) {
+      const diff = highLevelDays - child.parentalLeaveDays.getHighLevelDaysLeft(parent.id);
       alert(t('validationFailedOutOfSicknessBenefitLevelDays', { missingDays: diff }));
       validationFailed = true;
    }
@@ -268,18 +270,17 @@ const generatePattern = () => {
          }
 
          const days = percentage / 100;
-         child.parentalLeaveDays.deductDays(parent, days, isLowLevel);
+         child.parentalLeaveDays.deductDays(parent.id, days, isLowLevel);
          // Create the event object
          const newEvent = {
             title: `${selectedParent.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr${lowLevelString}`,
             start: currentDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
-            person: selectedParent.value.name,
-            parent: parent,
             percentage: percentage,
             isLowLevel: isLowLevel,
             pay: pay,
             childId: child.id,
-            parentId: selectedParent.value.id,
+            parentId: parent.id,
+            person: parent.name,
             id: highestEventId,
          };
          highestEventId++;
@@ -292,11 +293,11 @@ const generatePattern = () => {
 const removeEvent = (id) => {
    const event = events.value.find(e => e.id == id);
    if (event) {
-      const { parent, percentage, isLowLevel, childId, start } = event;
+      const { parentId, percentage, isLowLevel, childId, start } = event;
       const child = children.value.find(child => child.id === childId);
       const days = percentage / 100;
-      child.parentalLeaveDays.addDays(parent, days, isLowLevel);
-      if (isDoubleDay(start, childId, parent)) {
+      child.parentalLeaveDays.addDays(parentId, days, isLowLevel);
+      if (isDoubleDay(start, childId, parentId)) {
          child.parentalLeaveDays.addDoubleDay();
       }
       events.value = events.value.filter(e => e.id != id);
@@ -333,7 +334,8 @@ const loadChildren = () => {
    const savedChildren = localStorage.getItem('savedChildren');
    if (savedChildren) {
       JSON.parse(savedChildren).forEach(childData => {
-         const parentalLeaveDays = new ParentalLeaveDays(childData.tuplet, childData.parentalLeaveDays);
+         let parentalLeaveDays = new ParentalLeaveDays(childData.parentalLeaveDays.parentIds);
+         parentalLeaveDays.initializeFromObject(childData.parentalLeaveDays)
          let child = new Child(childData.name, childData.birthdate, childData.id, childData.tuplet, parentalLeaveDays);
          children.value.push(child);
       });
@@ -380,7 +382,8 @@ const addChild = () => {
          }
       });
       // Add new child
-      const parentalLeaveDays = new ParentalLeaveDays(1);
+      const parentIds = parents.value.map(parent => parent.id);
+      const parentalLeaveDays = new ParentalLeaveDays(parentIds);
       children.value.push(new Child(newChild.value.name, newChild.value.birthdate, highestId + 1, 1, parentalLeaveDays));
    }
    if (!selectedChild.value) {
@@ -404,35 +407,51 @@ const removeChild = (id) => {
 const editChild = (id) => {
    const child = children.value.find(child => child.id === id)
    adjustedDays.value = child.parentalLeaveDays.getAllDays();
+   adjustedDoubleDays.value = child.parentalLeaveDays.getDoubleDaysLeft();
    editChildren.value = id;
 }
 
 const updateChild = (id) => {
    const child = children.value.find(child => child.id === id)
    child.parentalLeaveDays.setAllDays(adjustedDays.value);
+   child.parentalLeaveDays.setDoubleDaysLeft(adjustedDoubleDays.value);
    editChildren.value = - 1
    saveChildren();
 }
 
-const addParent = (parent) => {
-   parents.value[parent].isDefined = true;
-   selectedParent.value = parents.value[parent];
+const addParent = () => {
+   let highestId = -1;
+      parents.value.forEach(parent => {
+         if (parent.id > highestId) {
+            highestId = parent.id;
+         }
+      });
+   parents.value.push({...newParent.value, id: highestId + 1});
+   newParent.value = { name: '', salary: 0 }; // Reset new parent
+   selectedParent.value = parents.value[0];
    saveParents();
 }
 
-const updateSchema = () => {
-   if (parents.value.mother.isDefined) {
-      if (!("id" in parents.value.mother)) {
-         parents.value.mother.id = 1;
-         saveParents();
-      }
+const updateParent = () => {
+   editParents.value = - 1;
+   saveParents();
+}
+
+const getParentNameFromId = (id) => {
+   const parent = parents.value.find(p => p.id == id);
+   return parent.name
+}
+
+const removeParent = (id) => {
+   const parentIndex = parents.value.findIndex(parent => parent.id == id);
+   if (parentIndex > -1) {
+      parents.value.splice(parentIndex, 1);
    }
-   if (parents.value.father.isDefined) {
-      if (!("id" in parents.value.father)) {
-         parents.value.father.id = 0;
-         saveParents();
-      }
+   editParents.value = -1;
+   if (parents.value.length > 0) {
+      selectedParent.value = parents.value[0]
    }
+   saveParents();
 }
 
 // Load events automatically when the component is mounted
@@ -440,13 +459,9 @@ onMounted(() => {
    loadParents();
    loadChildren();
    loadCalendar();
-   updateSchema();
-   if (parents.value.mother.isDefined) {
-      selectedParent.value = parents.value.mother;
-   } else if (parents.value.father.isDefined) {
-      selectedParent.value = parents.value.father;
-   } else {
-      activeTab.value = 'parents'
+   if (parents.value.length > 0)
+   {
+      selectedParent.value = parents.value[0];
    }
    if (children.value.length > 0) {
       selectedChild.value = children.value[0];
@@ -473,14 +488,13 @@ onMounted(() => {
 
          <!-- Generate pattern tab -->
          <div v-if="activeTab === 'pattern'" class="settings-form">
-            <form v-if="children.length > 0 && (parents.mother.isDefined || parents.father.isDefined)" @submit.prevent>
+            <form v-if="children.length > 0 && parents.length > 0" @submit.prevent>
                <div>
                </div>
                <!-- Person Selector -->
                <label for="person">{{ $t('parent') }}:</label>
                <select v-model="selectedParent">
-                  <option v-if="parents.mother.isDefined" :value="parents.mother">{{ parents.mother.name }}</option>
-                  <option v-if="parents.father.isDefined" :value="parents.father">{{ parents.father.name }}</option>
+                  <option v-for="parent in parents" :value="parent">{{ parent.name }}</option>
                </select>
                <button @click="clearCalendar">{{ $t('clearAllScheduledDays') }}</button>
                <div v-if="children.length > 1">
@@ -537,7 +551,7 @@ onMounted(() => {
             <div v-else>
                <p>{{ $t('patternGenerationNotPossible') }}:</p>
                <p v-if="children.length == 0">{{ $t('noChildAdded') }}.</p>
-               <p v-if="!parents.father.isDefined && !parents.mother.isDefined">{{ $t('noParentAdded') }}.</p>
+               <p v-if="parents.length == 0">{{ $t('noParentAdded') }}.</p>
             </div>
          </div>
 
@@ -550,25 +564,24 @@ onMounted(() => {
                   <p>{{ $t('daysLeftOn') }}:</p>
                   <div v-if="editChildren == child.id">
                      <p>{{ $t('sicknessBenefitLevel') }}:</p>
-                     <label>{{ $t('father') }}:</label>
-                     <input type="number" v-model="adjustedDays.father.high" />
-                     <label>{{ $t('mother') }}:</label>
-                     <input type="number" v-model="adjustedDays.mother.high" />
+                     <div v-for="parent in adjustedDays" :key="parent.parentId">
+                     <label>{{ getParentNameFromId(parent.parentId) }}</label>
+                     <input type="number" v-model="parent.high" />
+                     </div>
                   </div>
                   <p v-else>{{ $t('sicknessBenefitLevel') }}: {{ child.remainingDays.high }}</p>
                   <div v-if="editChildren == child.id">
                      <p>{{ $t('minimumLevel') }}:</p>
-                     <label>{{ $t('father') }}:</label>
-                     <input type="number" v-model="adjustedDays.father.low" />
-                     <label>{{ $t('mother') }}:</label>
-                     <input type="number" v-model="adjustedDays.mother.low" />
-
+                     <div v-for="parent in adjustedDays" :key="parent.parentId">
+                     <label>{{ getParentNameFromId(parent.parentId) }}</label>
+                     <input type="number" v-model="parent.low" />
+                     </div>
                   </div>
                   <p v-else>{{ $t('minimumLevel') }}: {{ child.remainingDays.low }}</p>
                   <div v-if="child.tuplet == 1">
                      <p> {{ $t('doubleDaysLeft') }}:</p>
                      <div v-if="editChildren == child.id">
-                        <input type="number" v-model="adjustedDays.double" />
+                        <input type="number" v-model="adjustedDoubleDays" />
                      </div>
                      <p v-else>{{ child.remainingDays.double }} ({{ $t('validTo') }} {{
                child.remainingDays.doubleDaysExpiration
@@ -582,7 +595,7 @@ onMounted(() => {
                   </div>
                </div>
             </div>
-            <h3>Add child</h3>
+            <h3>{{ $t('addChild') }}</h3>
             <label for="childName">{{ $t('name') }}:</label>
             <input type="text" v-model="newChild.name" placeholder="Enter child's name" />
 
@@ -595,56 +608,49 @@ onMounted(() => {
          <!-- Parents tab -->
          <div v-if="activeTab === 'parents'" class="settings-form">
             <h2>{{ $t('parents') }}</h2>
-            <div v-if="parents.father.isDefined">
-               <h4>{{ $t('father') }}: {{ parents.father.name }}</h4>
-               <p>{{ $t('monthlySalary') }}: {{ parents.father.salary }}</p>
-               <button @click="parents.father.isDefined = false">{{ $t('edit') }}</button>
+            <div v-if=parents>
+               <div v-for="parent in parents" :key="parent.id">
+                  <div v-if="editParents == parent.id">
+                     <div>
+                     <label for="parentName">{{ $t('name') }}:</label>
+                     <input type="text" v-model="parent.name" placeholder="Enter parent's name" />
+                     </div>
+                     <div>
+                     <label for="salary">{{ $t('monthlySalary') }}:</label>
+                     <input type="number" v-model="parent.salary" min=0 placeholder="Enter parent's monthly salary" value= />
+                     </div>
+                     <button @click="updateParent()">{{ $t('OK') }}</button>
+                     <button @click="removeParent(parent.id)">{{ $t('remove') }}</button>
+                  </div>
+                  <div v-else>
+                     <h4>{{ $t('parent') }}: {{ parent.name }}</h4>
+                     <p>{{ $t('monthlySalary') }}: {{ parent.salary }}</p>
+                     <button @click="editParents = parent.id">{{ $t('edit') }}</button>
+                  </div>
+               </div>
             </div>
-            <div v-else>
-               <label for="parentName">{{ $t('name') }}:</label>
-               <input type="text" v-model="parents.father.name" placeholder="Enter fathers's name" />
-
-               <label for="salary">{{ $t('monthlySalary') }}:</label>
-               <input type="number" min=0 v-model="parents.father.salary"
-                  placeholder="Enter fathers's monthly salary" />
-
-               <button @click="addParent('father')">{{ $t('add') }}</button>
+            <h3>{{ $t('addParent') }}</h3>
+            <div>
+            <label for="parentName">{{ $t('name') }}:</label>
+            <input type="text" v-model="newParent.name" placeholder="Enter parent's name" />
             </div>
-
-            <div v-show="parents.mother.isDefined">
-               <h4>{{ $t('mother') }}: {{ parents.mother.name }}</h4>
-               <p>{{ $t('monthlySalary') }}: {{ parents.mother.salary }}</p>
-               <button @click="parents.mother.isDefined = false">Edit</button>
+            <div>
+            <label for="salary">{{ $t('monthlySalary') }}:</label>
+            <input type="number" v-model="newParent.salary" min=0 placeholder="Enter parent's monthly salary" />
             </div>
-            <div v-show="!parents.mother.isDefined">
-               <label for="parentName">{{ $t('name') }}:</label>
-               <input type="text" v-model="parents.mother.name" placeholder="Enter mothers's name" />
-
-               <label for="salary">{{ $t('monthlySalary') }}:</label>
-               <input type="number" min=0 v-model="parents.mother.salary"
-                  placeholder="Enter mothers's monthly salary" />
-
-               <button @click="addParent('mother')">{{ $t('add') }}</button>
-            </div>
-
+            <button @click="addParent()">{{ $t('add') }}</button>
          </div>
       </div>
 
       <!-- Information Box -->
       <div class="summary-box">
          <h3>{{ $t('totalPay') }}</h3>
-         <p v-if="parents.father.isDefined">
-            {{ parents.father.name }}: {{ totalPay.father.toFixed(0) }}
-         </p>
-         <p v-if="parents.mother.isDefined">
-            {{ parents.mother.name }}: {{ totalPay.mother.toFixed(0) }}
+         <p v-for="parent in parents" :key="parent.id">
+            {{ parent.name }}: {{ totalPay.father.toFixed(0) }}
          </p>
          <h3>{{ $t('daysLeft') }}</h3>
-         <p v-if="parents.father.isDefined">
-            {{ parents.father.name }}: H {{ totalRemainingDays.father.high }} L {{ totalRemainingDays.father.low }}
-         </p>
-         <p v-if="parents.mother.isDefined">
-            {{ parents.mother.name }}: H {{ totalRemainingDays.mother.high }} L {{ totalRemainingDays.mother.low }}
+         <p v-for="parent in parents" :key="parent.id">
+            {{ parent.name }}: H {{ totalRemainingDays[parent.id].high }} L {{ totalRemainingDays[parent.id].low }}
          </p>
       </div>
    </div>
@@ -695,13 +701,13 @@ onMounted(() => {
    /* Space between checkbox and label */
 }
 
-.parent-father {
+.parent-0 {
    background-color: #00BFFF !important;
    border-color: #00BFFF !important;
    color: white !important;
 }
 
-.parent-father-low {
+.parent-0-low {
    background: repeating-linear-gradient(45deg,
          #00BFFF,
          #00BFFF 8px,
@@ -711,13 +717,13 @@ onMounted(() => {
    color: white !important;
 }
 
-.parent-mother {
+.parent-1 {
    background-color: lightcoral !important;
    border-color: lightcoral !important;
    color: white !important;
 }
 
-.parent-mother-low {
+.parent-1-low {
    background: repeating-linear-gradient(45deg,
          lightcoral,
          lightcoral 8px,
