@@ -29,6 +29,7 @@ const selectedChild = ref(null);
 // Track the total remaining days for all parents across all children
 const totalRemainingDays = computed(() => {
    let totals = {};
+   let totalSum = {high: 0, low: 0};
    parents.value.forEach((parent) => {
       totals[parent.id] = { high: 0, low: 0 };
    });
@@ -38,9 +39,13 @@ const totalRemainingDays = computed(() => {
          const parentId = parent.id;
          totals[parentId].high += child.parentalLeaveDays.getHighLevelDaysLeft(parentId);
          totals[parentId].low += child.parentalLeaveDays.getLowLevelDaysLeft(parentId);
+         totalSum.high += child.parentalLeaveDays.getHighLevelDaysLeft(parentId);
+         totalSum.low += child.parentalLeaveDays.getLowLevelDaysLeft(parentId);
       });
    });
-   return totals;
+   let result = {parents: totals,
+                 sum: totalSum};
+   return result;
 });
 
 // Computed property to calculate remaining days for each child
@@ -649,7 +654,10 @@ onMounted(() => {
          </p>
          <h3>{{ $t('daysLeft') }}</h3>
          <p v-for="parent in parents" :key="parent.id">
-            {{ parent.name }}: H {{ totalRemainingDays[parent.id].high }} L {{ totalRemainingDays[parent.id].low }}
+            {{ parent.name }}: H {{ totalRemainingDays.parents[parent.id].high }} L {{ totalRemainingDays.parents[parent.id].low }}
+         </p>
+         <p>
+            {{ $t('total') }}: H {{ totalRemainingDays.sum.high }} L {{ totalRemainingDays.sum.low }}
          </p>
       </div>
    </div>

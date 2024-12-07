@@ -46,5 +46,6 @@
    "validationFailedOutOfMinimumLevelDays": "Validation failed: ${missingDays} additional minimum-level days are required. Please adjust the schedule or transfer days and try again.",
    "validationFailedOutOfSicknessBenefitLevelDays": "Validation failed: ${missingDays} additional sickness benefit level days are required. Please adjust the schedule or transfer days and try again.",
    "year": "year",
-   "language": "Language"
+   "language": "Language",
+   "total": "Total"
 }

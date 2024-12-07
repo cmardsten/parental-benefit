@@ -46,5 +46,6 @@
    "validationFailedOutOfMinimumLevelDays": "Validering misslyckades: {missingDays} ytterligare dagar på lägstanivå krävs. Vänligen justera datum eller överför dagar och försök igen.",
    "validationFailedOutOfSicknessBenefitLevelDays": "Validering misslyckades: {missingDays} ytterligare dagara på sjukpenningnivå krävs. Vänligen justera datum eller överför dagar och försök igen.",
    "year": "År",
-   "language": "Språk"
+   "language": "Språk",
+   "total": "Totalt"
 }
