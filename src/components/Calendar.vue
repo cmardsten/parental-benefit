@@ -12,7 +12,6 @@ import { useI18n } from 'vue-i18n';
 const { t, locale } = useI18n();
 
 const activeTab = ref('pattern');
-const language = ref(null);
 
 const today = new Date();
 const newChild = ref({ name: "", birthdate: new Date().toISOString().substring(0, 10) });
@@ -263,7 +262,7 @@ const generatePattern = () => {
       const percentage = pattern.value[dayName].percentage;
       if (percentage > 0) {
          const isLowLevel = pattern.value[dayName].isLowLevel;
-         const pay = calculateDayPay(selectedParent.value.salary, percentage, isLowLevel, currentDate);
+         const pay = calculateDayPay(parent.salary, percentage, isLowLevel, currentDate);
          var lowLevelString = "";
          if (isLowLevel) {
             lowLevelString = " (L)"
@@ -273,7 +272,7 @@ const generatePattern = () => {
          child.parentalLeaveDays.deductDays(parent.id, days, isLowLevel);
          // Create the event object
          const newEvent = {
-            title: `${selectedParent.value.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr${lowLevelString}`,
+            title: `${parent.name.charAt(0)} ${percentage}% ${pay.toFixed(0)} kr${lowLevelString}`,
             start: currentDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
             percentage: percentage,
             isLowLevel: isLowLevel,
