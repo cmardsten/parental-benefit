@@ -493,6 +493,59 @@ const removeParent = (id) => {
    saveParents();
 }
 
+const monthNames = ["Januari", "Februari", "Mars", "April", "Maj", "Juni",
+   "Juli", "Augusti", "September", "Oktober", "November", "December"
+];
+
+const selectedYear = ref(new Date().getFullYear());
+const yearData = computed(() => {
+   const year = selectedYear.value;
+   const yearResult = {};
+
+   for (let month = 0; month < 12; month++) {
+      const monthData = [];
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let day = 1; day <= daysInMonth; day++) {
+         const date = new Date(year, month, day).toISOString().split('T')[0];
+
+         monthData.push({
+            date,
+            dayNumber: day,
+            events: parents.value.reduce((acc, parent) => {
+               acc[parent.id] = events.value.filter(e => e.parentId === parent.id && e.start == date);
+               return acc;
+            }, {}),
+         });
+      }
+
+      yearResult[month] = monthData;
+   }
+
+   return yearResult;
+});
+
+const getEventClass = (parentId, isLowLevel) => {
+   var eventClass = '';
+   if (parentId == 0) {
+      if (isLowLevel) {
+         eventClass = 'event-parent-0-low';
+      }
+      else {
+         eventClass = 'event-parent-0';
+      }
+   }
+   else {
+      if (isLowLevel) {
+         eventClass = 'event-parent-1-low'
+      }
+      else {
+         eventClass = 'event-parent-1';
+      }
+   }
+   return eventClass;
+}
+
 // Load events automatically when the component is mounted
 onMounted(() => {
    loadParents();
@@ -504,14 +557,38 @@ onMounted(() => {
    if (children.value.length > 0) {
       selectedChild.value = children.value[0];
    }
+   console.log(parents.value);
 });
 </script>
-
 <template>
    <div class="main-container">
       <div class="left-section">
-         <div class="calendar">
-            <FullCalendar :options="calendarOptions" />
+         <div>
+            <h2>
+               <i tabindex="0" class="arrow left" @click="selectedYear--" @keyup.enter="selectedYear--"></i>
+                  {{ selectedYear }}
+               <i class="arrow right" tabindex="0" @click="selectedYear++" @keyup.enter="selectedYear++"></i>
+            </h2>
+            <div class="calendar-grid">
+               <div v-for="(month, index) in yearData" :key="index">
+                  <p>{{ monthNames[index] }}</p>
+                  <div class="month-slot">
+                     <div v-for="day in month" :key="day.date" :class="{ today: day.isToday }" class="day-slot">
+                        {{ day.dayNumber }}
+                     </div>
+                  </div>
+                  <div v-for="parent in parents">
+                     <div class="month-slot">
+                        <div v-for="day in month" :key="day.date" class="day-slot-parent">
+                           <div v-if="day.events[parent.id].length > 0"
+                              :class="getEventClass(parent.id, day.events[parent.id][0]?.isLowLevel)">
+                              {{ day.events[parent.id][0]?.percentage }}
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
          </div>
          <div class="tabs">
             <button @click="activeTab = 'pattern'">{{ $t('scheduleLeave') }}</button>
@@ -744,6 +821,32 @@ onMounted(() => {
    gap: 20px;
 }
 
+.arrow {
+  border: solid gray;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  padding: 6px;
+}
+
+.arrow:hover{
+  border: solid lightgray;
+  border-width: 0 4px 4px 0;
+  display: inline-block;
+  padding: 6px;
+}
+
+.right {
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  margin-left: 10px;
+}
+
+.left {
+  transform: rotate(135deg);
+  -webkit-transform: rotate(135deg);
+  margin-right: 10px;
+}
+
 .calendar {
    border: 1px solid #dddddd;
    padding: 15px;
@@ -778,16 +881,6 @@ onMounted(() => {
 
 .parent-0 {
    background-color: #00BFFF !important;
-   border-color: #00BFFF !important;
-   color: white !important;
-}
-
-.parent-0-low {
-   background: repeating-linear-gradient(45deg,
-         #00BFFF,
-         #00BFFF 8px,
-         #22DFFF 8px,
-         #22DFFF 16px);
    border-color: #00BFFF !important;
    color: white !important;
 }
@@ -851,5 +944,91 @@ input[type=number]::-webkit-outer-spin-button {
    button:active {
       background-color: #222;
    }
+}
+
+.calendar-grid {
+   display: inline;
+}
+
+.month-slot {
+   display: flex;
+}
+
+.day-slot {
+   border: 1px solid #777;
+   border-radius: 2px;
+   text-align: center;
+   width: 32px;
+   background: #aaa;
+   font-size: 14px;
+   color: black;
+}
+
+.day-slot-parent {
+   border: 1px solid #999;
+   border-radius: 2px;
+   text-align: center;
+   line-height: 100%;
+   padding: 0px;
+   width: 32px;
+   height: 20px;
+   margin: 0px;
+   background: #ccc;
+   color: black;
+}
+
+
+.day-slot.today {
+   background: #007bff;
+   color: white;
+   font-weight: bold;
+}
+
+.day-slot:hover {
+   background: #e7f1ff;
+}
+
+.event-parent-1 {
+   width: 100%;
+   height: 100%;
+   margin: 0px;
+   padding: 0px;
+   background: lightcoral;
+}
+
+.event-parent-1-low {
+   width: 100%;
+   height: 100%;
+   margin: 0px;
+   padding: 0px;
+   background: repeating-linear-gradient(45deg,
+         lightcoral,
+         lightcoral 6px,
+         #F4A4A4 6px,
+         #F4A4A4 12px);
+   border-color: lightcoral !important;
+   color: black !important;
+}
+
+.event-parent-0 {
+   width: 100%;
+   height: 100%;
+   margin: 0px;
+   padding: 0px;
+   background: #00BFFF;
+}
+
+.event-parent-0-low {
+   width: 100%;
+   height: 100%;
+   margin: 0px;
+   padding: 0px;
+   background: repeating-linear-gradient(45deg,
+         #00BFFF,
+         #00BFFF 8px,
+         #22DFFF 8px,
+         #22DFFF 16px);
+   border-color: #00BFFF !important;
+   color: black !important;
 }
 </style>
