@@ -47,5 +47,9 @@
    "validationFailedOutOfSicknessBenefitLevelDays": "Validering misslyckades: {missingDays} ytterligare dagara på sjukpenningnivå krävs. Vänligen justera datum eller överför dagar och försök igen.",
    "year": "År",
    "language": "Språk",
-   "total": "Totalt"
+   "total": "Totalt",
+   "removeLeave": "Ta bort ledighet",
+   "noParentSelected": "Ingen förälder är vald.",
+   "eventsBetweenStartAndEndHasBeenRemovedForParents": "Ledighet mellan {start} och {end} har tagits bort för: {parents}",
+   " and ": " och "
 }

@@ -47,5 +47,9 @@
    "validationFailedOutOfSicknessBenefitLevelDays": "Validation failed: ${missingDays} additional sickness benefit level days are required. Please adjust the schedule or transfer days and try again.",
    "year": "year",
    "language": "Language",
-   "total": "Total"
+   "total": "Total",
+   "removeLeave": "Remove leave",
+   "noParentSelected": "No parent selected.",
+   "eventsBetweenStartAndEndHasBeenRemovedForParents": "Leave between {start} and {end} has been removed for: {parents}",
+   " and ": " and "
 }

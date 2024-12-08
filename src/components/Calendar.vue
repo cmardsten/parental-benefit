@@ -15,7 +15,7 @@ const activeTab = ref('pattern');
 
 const today = new Date();
 const newChild = ref({ name: "", birthdate: new Date().toISOString().substring(0, 10) });
-const newParent = ref({ name: "", salary: 0});
+const newParent = ref({ name: "", salary: 0 });
 const editChildren = ref(-1);
 const editParents = ref(-1);
 const adjustedDays = ref(null);
@@ -29,7 +29,7 @@ const selectedChild = ref(null);
 // Track the total remaining days for all parents across all children
 const totalRemainingDays = computed(() => {
    let totals = {};
-   let totalSum = {high: 0, low: 0};
+   let totalSum = { high: 0, low: 0 };
    parents.value.forEach((parent) => {
       totals[parent.id] = { high: 0, low: 0 };
    });
@@ -43,8 +43,10 @@ const totalRemainingDays = computed(() => {
          totalSum.low += child.parentalLeaveDays.getLowLevelDaysLeft(parentId);
       });
    });
-   let result = {parents: totals,
-                 sum: totalSum};
+   let result = {
+      parents: totals,
+      sum: totalSum
+   };
    return result;
 });
 
@@ -309,6 +311,32 @@ const removeEvent = (id) => {
    saveDays();
 };
 
+const getParentsString = (parentIds) => {
+   const matchingParents = parents.value.filter(parent => parentIds.includes(parent.id));
+   const names = matchingParents.map(parent => parent.name);
+   return names.join(t(' and '));
+}
+
+const removeFormData = ref({
+   startDate: today.toISOString().split('T')[0],
+   endDate: today.toISOString().split('T')[0],
+   selectedParents: [],
+});
+const removeEventsInRange = () => {
+   if (removeFormData.value.selectedParents.length == 0) {
+      alert(t('noParentSelected'));
+      return;
+   }
+   const start = new Date(removeFormData.value.startDate);
+   const end = new Date(removeFormData.value.endDate);
+
+   events.value = events.value.filter(event => {
+      const eventDate = new Date(event.start);
+      return eventDate < start || eventDate > end || !removeFormData.value.selectedParents.includes(event.parentId);
+   });
+   alert(t('eventsBetweenStartAndEndHasBeenRemovedForParents', { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], parents: getParentsString(removeFormData.value.selectedParents) }));
+};
+
 const saveDays = () => {
    saveEvents();
    saveChildren();
@@ -425,12 +453,12 @@ const updateChild = (id) => {
 
 const addParent = () => {
    let highestId = -1;
-      parents.value.forEach(parent => {
-         if (parent.id > highestId) {
-            highestId = parent.id;
-         }
-      });
-   parents.value.push({...newParent.value, id: highestId + 1});
+   parents.value.forEach(parent => {
+      if (parent.id > highestId) {
+         highestId = parent.id;
+      }
+   });
+   parents.value.push({ ...newParent.value, id: highestId + 1 });
    newParent.value = { name: '', salary: 0 }; // Reset new parent
    selectedParent.value = parents.value[0];
    saveParents();
@@ -463,8 +491,7 @@ onMounted(() => {
    loadParents();
    loadChildren();
    loadCalendar();
-   if (parents.value.length > 0)
-   {
+   if (parents.value.length > 0) {
       selectedParent.value = parents.value[0];
    }
    if (children.value.length > 0) {
@@ -481,6 +508,7 @@ onMounted(() => {
          </div>
          <div class="tabs">
             <button @click="activeTab = 'pattern'">{{ $t('scheduleLeave') }}</button>
+            <button @click="activeTab = 'removeLeave'">{{ $t('removeLeave') }}</button>
             <button @click="activeTab = 'child'">{{ $t('children') }}</button>
             <button @click="activeTab = 'parents'">{{ $t('parents') }}</button>
             <label for="language">{{ $t('language') }}</label>
@@ -558,6 +586,37 @@ onMounted(() => {
                <p v-if="parents.length == 0">{{ $t('noParentAdded') }}.</p>
             </div>
          </div>
+         <!-- Remove leave tab -->
+         <div v-if="activeTab === 'removeLeave'" class="settings-form">
+            <h2>{{ $t('removeLeave') }}</h2>
+            <form @submit.prevent="removeEventsInRange">
+               <tr>
+                  <td>
+                     <div v-for="parent in parents" :key="parent.id">
+                        <input :value="parent.id" type="checkbox" v-model="removeFormData.selectedParents" />
+                        <label>{{ parent.name }}</label>
+                     </div>
+                  </td>
+               </tr>
+               <tr>
+                  <td>
+                     <label for="startDate">{{ $t('startDate') }}</label>
+                  </td>
+                  <td>
+                     <input type="date" v-model="removeFormData.startDate" />
+                  </td>
+               </tr>
+               <tr>
+                  <td>
+                     <label for="endDate">{{ $t('endDate') }}</label>
+                  </td>
+                  <td>
+                     <input type="date" v-model="removeFormData.endDate" />
+                  </td>
+               </tr>
+               <button type="submit">{{ $t('remove') }}</button>
+            </form>
+         </div>
 
          <!-- Children tab -->
          <div v-if="activeTab === 'child'" class="settings-form">
@@ -569,16 +628,16 @@ onMounted(() => {
                   <div v-if="editChildren == child.id">
                      <p>{{ $t('sicknessBenefitLevel') }}:</p>
                      <div v-for="parent in adjustedDays" :key="parent.parentId">
-                     <label>{{ getParentNameFromId(parent.parentId) }}</label>
-                     <input type="number" v-model="parent.high" />
+                        <label>{{ getParentNameFromId(parent.parentId) }}</label>
+                        <input type="number" v-model="parent.high" />
                      </div>
                   </div>
                   <p v-else>{{ $t('sicknessBenefitLevel') }}: {{ child.remainingDays.high }}</p>
                   <div v-if="editChildren == child.id">
                      <p>{{ $t('minimumLevel') }}:</p>
                      <div v-for="parent in adjustedDays" :key="parent.parentId">
-                     <label>{{ getParentNameFromId(parent.parentId) }}</label>
-                     <input type="number" v-model="parent.low" />
+                        <label>{{ getParentNameFromId(parent.parentId) }}</label>
+                        <input type="number" v-model="parent.low" />
                      </div>
                   </div>
                   <p v-else>{{ $t('minimumLevel') }}: {{ child.remainingDays.low }}</p>
@@ -588,8 +647,8 @@ onMounted(() => {
                         <input type="number" v-model="adjustedDoubleDays" />
                      </div>
                      <p v-else>{{ child.remainingDays.double }} ({{ $t('validTo') }} {{
-               child.remainingDays.doubleDaysExpiration
-            }})</p>
+                        child.remainingDays.doubleDaysExpiration
+                        }})</p>
                   </div>
                   <div>
                      <button v-if="editChildren == child.id" @click="updateChild(child.id)">{{ $t('OK') }}</button>
@@ -616,12 +675,13 @@ onMounted(() => {
                <div v-for="parent in parents" :key="parent.id">
                   <div v-if="editParents == parent.id">
                      <div>
-                     <label for="parentName">{{ $t('name') }}:</label>
-                     <input type="text" v-model="parent.name" placeholder="Enter parent's name" />
+                        <label for="parentName">{{ $t('name') }}:</label>
+                        <input type="text" v-model="parent.name" placeholder="Enter parent's name" />
                      </div>
                      <div>
-                     <label for="salary">{{ $t('monthlySalary') }}:</label>
-                     <input type="number" v-model="parent.salary" min=0 placeholder="Enter parent's monthly salary" value= />
+                        <label for="salary">{{ $t('monthlySalary') }}:</label>
+                        <input type="number" v-model="parent.salary" min=0 placeholder="Enter parent's monthly salary"
+                           value= />
                      </div>
                      <button @click="updateParent()">{{ $t('OK') }}</button>
                      <button @click="removeParent(parent.id)">{{ $t('remove') }}</button>
@@ -635,12 +695,12 @@ onMounted(() => {
             </div>
             <h3>{{ $t('addParent') }}</h3>
             <div>
-            <label for="parentName">{{ $t('name') }}:</label>
-            <input type="text" v-model="newParent.name" placeholder="Enter parent's name" />
+               <label for="parentName">{{ $t('name') }}:</label>
+               <input type="text" v-model="newParent.name" placeholder="Enter parent's name" />
             </div>
             <div>
-            <label for="salary">{{ $t('monthlySalary') }}:</label>
-            <input type="number" v-model="newParent.salary" min=0 placeholder="Enter parent's monthly salary" />
+               <label for="salary">{{ $t('monthlySalary') }}:</label>
+               <input type="number" v-model="newParent.salary" min=0 placeholder="Enter parent's monthly salary" />
             </div>
             <button @click="addParent()">{{ $t('add') }}</button>
          </div>
@@ -654,7 +714,8 @@ onMounted(() => {
          </p>
          <h3>{{ $t('daysLeft') }}</h3>
          <p v-for="parent in parents" :key="parent.id">
-            {{ parent.name }}: H {{ totalRemainingDays.parents[parent.id].high }} L {{ totalRemainingDays.parents[parent.id].low }}
+            {{ parent.name }}: H {{ totalRemainingDays.parents[parent.id].high }} L {{
+               totalRemainingDays.parents[parent.id].low }}
          </p>
          <p>
             {{ $t('total') }}: H {{ totalRemainingDays.sum.high }} L {{ totalRemainingDays.sum.low }}
