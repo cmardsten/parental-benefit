@@ -329,11 +329,18 @@ const removeEventsInRange = () => {
    }
    const start = new Date(removeFormData.value.startDate);
    const end = new Date(removeFormData.value.endDate);
-
-   events.value = events.value.filter(event => {
+   const eventsToRemove = events.value.filter(event => {
       const eventDate = new Date(event.start);
-      return eventDate < start || eventDate > end || !removeFormData.value.selectedParents.includes(event.parentId);
-   });
+      return eventDate >= start && eventDate <= end && removeFormData.value.selectedParents.includes(event.parentId);
+   })
+   const idsToRemove = eventsToRemove.map(event => event.id);
+   for (let ii = events.value.length - 1; ii >= 0; ii--) {
+      const id = events.value[ii].id;
+      if (idsToRemove.includes(id)) {
+         removeEvent(id);
+      }
+   }
+
    alert(t('eventsBetweenStartAndEndHasBeenRemovedForParents', { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], parents: getParentsString(removeFormData.value.selectedParents) }));
 };
 
@@ -648,7 +655,7 @@ onMounted(() => {
                      </div>
                      <p v-else>{{ child.remainingDays.double }} ({{ $t('validTo') }} {{
                         child.remainingDays.doubleDaysExpiration
-                        }})</p>
+                     }})</p>
                   </div>
                   <div>
                      <button v-if="editChildren == child.id" @click="updateChild(child.id)">{{ $t('OK') }}</button>
