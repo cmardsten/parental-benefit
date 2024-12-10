@@ -1,10 +1,5 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import FullCalendar from '@fullcalendar/vue3';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import multiMonthPlugin from '@fullcalendar/multimonth'
-import svLocale from '@fullcalendar/core/locales/sv';
 import { Child } from '../Child';
 import { ParentalLeaveDays } from '../ParentalLeaveDays';
 import { useI18n } from 'vue-i18n';
@@ -116,42 +111,6 @@ const ratios = [
    { id: 6, ratio: '0' },
 ];
 
-const calendarOptions = computed(() => ({
-   ...FullCalendar.options,
-   locales: svLocale,
-   locale: locale.value,
-   plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
-   initialView: 'multiMonthCustomYear',
-   views: {
-      multiMonthCustomYear: {
-         type: 'multiMonth',
-         duration: { months: 12 },
-         buttonText: t('year')
-      }
-   },
-   headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'multiMonthCustomYear,dayGridMonth,dayGridWeek'
-   },
-   events: events.value,
-   eventClick: function (info) {
-      info.jsEvent.preventDefault(); // don't let the browser navigate
-      if (confirm(t('doYouWantToRemoveTheParentalDay')) == true) {
-         removeEvent(info.event.id);
-      };
-   },
-   eventDidMount: (info) => {
-      // Add a class based on the event's person field
-      const parentId = info.event.extendedProps.parentId;
-      var parentClass = `parent-${parentId}`;
-      if (info.event.extendedProps.isLowLevel == true) {
-         parentClass = parentClass.concat("-low");
-      }
-      info.el.classList.add(parentClass);
-   }
-}));
-
 // Compute total pay for each person
 const totalPay = computed(() => {
    const totals = {};
@@ -161,16 +120,6 @@ const totalPay = computed(() => {
       .reduce((sum, event) => sum + event.pay, 0);
    return totals;
 });
-
-const onDatesSet = (dateInfo) => {
-   // Logic for handling date changes
-   console.log('Current date range:', dateInfo.start, dateInfo.end);
-};
-
-const renderYearView = () => {
-   // Logic to render the year view (can be extended)
-   console.log('Year view triggered');
-};
 
 const calculateDayPay = (monthlySalary, percentage, isLowLevelDay, date) => {
    var pay = 0;
@@ -260,7 +209,6 @@ const generatePattern = () => {
    if (validationFailed) {
       return;
    }
-
 
    // Create events and deduct days
    child.parentalLeaveDays.deductDoubleDays(doubleDays);
