@@ -45,6 +45,29 @@ const totalRemainingDays = computed(() => {
    return result;
 });
 
+// Computed property to calculate pay per month per parent
+const monthPay = computed(() => {
+  const parentIds = parents.value.map(parent => parent.id);
+  const pay = Array.from({ length: 12 }, () => {
+    const monthData = {};
+    parentIds.forEach(parentId => {
+      monthData[parentId] = 0;
+    });
+    return monthData;
+  });
+
+  events.value.forEach(event => {
+    const eventDate = new Date(event.start);
+    if (eventDate.getFullYear() == selectedYear.value)
+    {
+      const monthIndex = eventDate.getMonth(eventDate);
+      pay[monthIndex][event.parentId] += event.pay;
+    }
+  });
+
+  return pay;
+});
+
 // Computed property to calculate remaining days for each child
 const childrenWithRemainingDays = computed(() =>
    children.value.map(child => {
@@ -533,6 +556,9 @@ onMounted(() => {
                               {{ day.events[parent.id][0]?.percentage }}
                            </div>
                         </div>
+                        <div class="parent-sum">
+                        {{ monthPay[index][parent.id].toFixed(0) }} kr
+                        </div>
                      </div>
                   </div>
                </div>
@@ -895,7 +921,9 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 .calendar-grid {
-   display: inline;
+   display: flex;
+   flex-wrap: wrap;
+   gap: 8px;
 }
 
 .month-slot {
@@ -925,6 +953,18 @@ input[type=number]::-webkit-outer-spin-button {
    color: black;
 }
 
+.parent-sum {
+   border: 1px solid #777;
+   border-radius: 2px;
+   text-align: center;
+   line-height: 100%;
+   padding: 0px;
+   width: 64px;
+   height: 20px;
+   margin-left: 0px;
+   background: #ccc;
+   color: black;
+}
 
 .day-slot.today {
    background: #007bff;
