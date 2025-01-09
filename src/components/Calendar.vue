@@ -475,7 +475,7 @@ const yearData = computed(() => {
 
    for (let month = 0; month < 12; month++) {
       const monthData = [];
-      const daysInMonth = new Date(year, month, 0).getDate();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
 
       for (let day = 1; day <= daysInMonth; day++) {
          const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
