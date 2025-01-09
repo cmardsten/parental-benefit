@@ -51,5 +51,6 @@
    "removeLeave": "Remove leave",
    "noParentSelected": "No parent selected.",
    "eventsBetweenStartAndEndHasBeenRemovedForParents": "Leave between {start} and {end} has been removed for: {parents}",
-   " and ": " and "
+   " and ": " and ",
+   "parentsHaveToBeAddedFirst": "Parents has to be added before children."
 }

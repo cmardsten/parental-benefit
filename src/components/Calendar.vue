@@ -640,8 +640,8 @@ onMounted(() => {
             </form>
             <div v-else>
                <p>{{ $t('patternGenerationNotPossible') }}:</p>
-               <p v-if="children.length == 0">{{ $t('noChildAdded') }}.</p>
                <p v-if="parents.length == 0">{{ $t('noParentAdded') }}.</p>
+               <p v-if="children.length == 0">{{ $t('noChildAdded') }}.</p>
             </div>
          </div>
          <!-- Remove leave tab -->
@@ -716,14 +716,19 @@ onMounted(() => {
                   </div>
                </div>
             </div>
-            <h3>{{ $t('addChild') }}</h3>
-            <label for="childName">{{ $t('name') }}:</label>
-            <input type="text" v-model="newChild.name" placeholder="Enter child's name" />
+            <div v-if="parents.length > 0">
+               <h3>{{ $t('addChild') }}</h3>
+               <label for="childName">{{ $t('name') }}:</label>
+               <input type="text" v-model="newChild.name" placeholder="Enter child's name" />
 
-            <label for="birthdate">{{ $t('birthdate') }}:</label>
-            <input type="date" v-model="newChild.birthdate" />
+               <label for="birthdate">{{ $t('birthdate') }}:</label>
+               <input type="date" v-model="newChild.birthdate" />
 
-            <button @click="addChild">{{ $t('add') }}</button>
+               <button @click="addChild">{{ $t('add') }}</button>
+            </div>
+            <div v-else>
+               <p>{{ $t('parentsHaveToBeAddedFirst') }}</p>
+            </div>
          </div>
 
          <!-- Parents tab -->

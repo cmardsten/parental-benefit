@@ -51,5 +51,6 @@
    "removeLeave": "Ta bort ledighet",
    "noParentSelected": "Ingen förälder är vald.",
    "eventsBetweenStartAndEndHasBeenRemovedForParents": "Ledighet mellan {start} och {end} har tagits bort för: {parents}",
-   " and ": " och "
+   " and ": " och ",
+   "parentsHaveToBeAddedFirst": "Föräldrar måste läggas till före barn."
 }
