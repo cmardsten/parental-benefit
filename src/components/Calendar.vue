@@ -475,14 +475,15 @@ const yearData = computed(() => {
 
    for (let month = 0; month < 12; month++) {
       const monthData = [];
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInMonth = new Date(year, month, 0).getDate();
 
       for (let day = 1; day <= daysInMonth; day++) {
-         const date = new Date(year, month, day).toISOString().split('T')[0];
-
+         const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+         const weekDayIndex = new Date(year, month, day).getDay();
          monthData.push({
             date,
             dayNumber: day,
+            isWeekend: weekDayIndex === 0 || weekDayIndex === 6,
             events: parents.value.reduce((acc, parent) => {
                acc[parent.id] = events.value.filter(e => e.parentId === parent.id && e.start == date);
                return acc;
@@ -544,7 +545,7 @@ onMounted(() => {
                <div v-for="(month, index) in yearData" :key="index">
                   <p>{{ monthNames[index] }}</p>
                   <div class="month-slot">
-                     <div v-for="day in month" :key="day.date" :class="{ today: day.isToday }" class="day-slot">
+                     <div v-for="day in month" :key="day.date" :class="{ today: day.isToday, weekend: day.isWeekend }" class="day-slot">
                         {{ day.dayNumber }}
                      </div>
                   </div>
@@ -975,6 +976,10 @@ input[type=number]::-webkit-outer-spin-button {
    background: #007bff;
    color: white;
    font-weight: bold;
+}
+
+.day-slot.weekend {
+   background: #888;
 }
 
 .day-slot:hover {
