@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { Child } from '../Child';
 import { ParentalLeaveDays } from '../ParentalLeaveDays';
+import DayPopup from './DayPopup.vue';
 import { useI18n } from 'vue-i18n';
 
 const { t, locale } = useI18n();
@@ -518,6 +519,69 @@ const getEventClass = (parentId, isLowLevel) => {
    return eventClass;
 }
 
+const popupState = ref({
+   visible: false,
+   date: null,
+   name: null,
+   percentage: null,
+   isLowLevel: null,
+   pay: null,
+   x: 0,
+   y: 0,
+   disableHide: false,
+   currentElement: null,
+   oldStyle: null
+})
+
+const populatePopupState = (date, name, percentage, isLowLevel, pay, event) =>
+{
+   popupState.value.visible = true;
+   popupState.value.date = date;
+   popupState.value.name = name;
+   popupState.value.percentage = percentage;
+   popupState.value.isLowLevel = isLowLevel;
+   popupState.value.pay = pay;
+   popupState.value.x = event.clientX;
+   popupState.value.y = event.clientY;
+   popupState.value.disableHide = false;
+   popupState.value.currentElement = event.target;
+   popupState.value.oldStyle = event.target.getAttribute("style");
+}
+
+const showPopup = (date, name, percentage, isLowLevel, pay, event) => {
+   if (!popupState.value.disableHide)
+   {
+      populatePopupState(date, name, percentage, isLowLevel, pay, event);
+   }
+};
+
+const onDayClick = (date, name, percentage, isLowLevel, pay, event) => {
+   if (!popupState.value.disableHide)
+   {
+      populatePopupState(date, name, percentage, isLowLevel, pay, event);
+      popupState.value.currentElement.setAttribute("style", "border: solid 2px");
+      popupState.value.disableHide = true;
+   }
+   else
+   {
+      popupState.value.disableHide = false;
+      hidePopup();
+   }
+}
+
+const onDayMouseLeave = () => {
+   if (!popupState.value.disableHide)
+   {
+      hidePopup();
+   }
+}
+
+const hidePopup = () => {
+   popupState.value.currentElement.setAttribute("style", popupState.value.oldStyle);
+   popupState.value.disableHide = false;
+   popupState.value.visible = false;
+};
+
 // Load events automatically when the component is mounted
 onMounted(() => {
    loadParents();
@@ -530,6 +594,7 @@ onMounted(() => {
       selectedChild.value = children.value[0];
    }
    console.log(parents.value);
+   document.addEventListener('click', hidePopup);
 });
 </script>
 <template>
@@ -553,7 +618,20 @@ onMounted(() => {
                      <div class="month-slot">
                         <div v-for="day in month" :key="day.date" class="day-slot-parent">
                            <div v-if="day.events[parent.id].length > 0"
-                              :class="getEventClass(parent.id, day.events[parent.id][0]?.isLowLevel)">
+                              :class="getEventClass(parent.id, day.events[parent.id][0]?.isLowLevel)"
+                              @mouseenter="(event) => showPopup(day.date, 
+                                                                parent.name,
+                                                                day.events[parent.id][0]?.percentage,
+                                                                day.events[parent.id][0]?.isLowLevel,
+                                                                day.events[parent.id][0]?.pay,
+                                                                event)"
+                              @click.stop="(event) => onDayClick(day.date, 
+                                                                 parent.name,
+                                                                 day.events[parent.id][0]?.percentage,
+                                                                 day.events[parent.id][0]?.isLowLevel,
+                                                                 day.events[parent.id][0]?.pay,
+                                                                 event)"
+                              @mouseleave="onDayMouseLeave">
                               {{ day.events[parent.id][0]?.percentage }}
                            </div>
                         </div>
@@ -786,6 +864,18 @@ onMounted(() => {
          </p>
       </div>
    </div>
+   <DayPopup v-if="popupState.visible"
+   :date=popupState.date
+   :name=popupState.name
+   :lowLevel=popupState.isLowLevel
+   :pay=popupState.pay
+   :percentage=popupState.percentage
+   :x="popupState.x"
+   :y="popupState.y"
+   :disableHide="popupState.disableHide"
+   @click.stop
+   @close="hidePopup"
+   />
 </template>
 
 <style>
