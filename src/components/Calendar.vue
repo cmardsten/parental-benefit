@@ -610,19 +610,16 @@ onMounted(() => {
                </div>
             </div>
          </div>
-         <div class="tabs">
-            <button @click="activeTab = 'pattern'">{{ $t('scheduleLeave') }}</button>
-            <button @click="activeTab = 'removeLeave'">{{ $t('removeLeave') }}</button>
-            <button @click="activeTab = 'child'">{{ $t('children') }}</button>
-            <button @click="activeTab = 'parents'">{{ $t('parents') }}</button>
-            <label for="language">{{ $t('language') }}</label>
-            <select v-model="$i18n.locale" @change="saveLanguage">
-               <option value='sv'>Svenska</option>
-               <option value='en'>English</option>
-            </select>
+         <div class="tab-container">
+         <div class="tab-buttons">
+            <button @click="activeTab = 'pattern'" :class="{ active: activeTab === 'pattern' }" class="tab-button tab-button-leftmost">{{ $t('scheduleLeave') }}</button>
+            <button @click="activeTab = 'removeLeave'" :class="{ active: activeTab === 'removeLeave' }" class="tab-button">{{ $t('removeLeave') }}</button>
+            <button @click="activeTab = 'child'" :class="{ active: activeTab === 'child' }" class="tab-button">{{ $t('children') }}</button>
+            <button @click="activeTab = 'parents'" :class="{ active: activeTab === 'parents' }" class="tab-button">{{ $t('parents') }}</button>
+            <button @click="activeTab = 'general'" :class="{ active: activeTab === 'general' }" class="tab-button tab-button-rightmost">Allmänt</button>
          </div>
 
-         <div class="settings-form">
+         <div class="settings-form tab-content">
          <!-- Generate pattern tab -->
          <div v-if="activeTab === 'pattern'">
             <form v-if="children.length > 0 && parents.length > 0" @submit.prevent>
@@ -739,7 +736,18 @@ onMounted(() => {
          @removeParent="(id) => removeParent(id)"
          @addParent="(name, salary) => addParent(name, salary)"
          />
+
+         <!-- General tab -->
+         <div v-if="activeTab === 'general'">
+         <h2>Allmänt</h2>
+         <label for="language">{{ $t('language') }}</label>
+            <select v-model="$i18n.locale" @change="saveLanguage">
+               <option value='sv'>Svenska</option>
+               <option value='en'>English</option>
+            </select>
          </div>
+      </div>
+      </div>
       </div>
 
       <!-- Information Box -->
@@ -817,13 +825,6 @@ onMounted(() => {
    border-radius: 8px;
 }
 
-.settings-form {
-   border: 1px solid #dddddd;
-   padding: 15px;
-   background-color: #f9f9f9;
-   border-radius: 8px;
-}
-
 .summary-box {
    align-self: flex-start;
    border: 1px solid #ddd;
@@ -877,6 +878,47 @@ input[type=number]::-webkit-outer-spin-button {
    margin: 0;
 }
 
+.tab-content {
+   border-radius: 8px;
+   padding: 15px;
+}
+
+.tab-buttons {
+   display: flex;
+   border-top-left-radius: 8px;
+   border-top-right-radius: 8px;
+}
+
+.tab-button {
+   flex: 1; /* Make all buttons equal width */
+   padding: 10px 15px;
+   border: none;
+   background: #999;
+   cursor: pointer;
+   text-align: center;
+   font-size: 14px;
+   font-weight: bold;
+   transition: background-color 0.3s, color 0.3s;
+}
+
+.tab-button-leftmost {
+   border-top-left-radius: 8px;
+}
+
+.tab-button-rightmost {
+   border-top-right-radius: 8px;
+}
+
+.tab-button.active {
+   background: #cccccc;
+}
+
+.tab-container {
+      border: 1px solid #aaaaaa;
+      border-radius: 8px;
+      background: #cccccc;
+   }
+
 @media (prefers-color-scheme: dark) {
    .summary-box {
       align-self: flex-start;
@@ -884,10 +926,17 @@ input[type=number]::-webkit-outer-spin-button {
       background-color: #222222;
    }
 
-   .settings-form {
-      border: 1px solid #333333;
-      background-color: #222222;
+   .tab-container {
+      background: #222222;
    }
+
+   .tab-button.active {
+      background: #222222;
+   }
+
+   .tab-button {
+   background: #555;
+}
 
    button,
    select,
