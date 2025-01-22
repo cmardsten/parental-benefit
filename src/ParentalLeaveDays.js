@@ -13,7 +13,7 @@ class ParentalLeaveDays {
             }
          }
       } else {
-         for (const parentId in parentIds) {
+         for (const parentId of parentIds) {
             this.days[parentId] = {
                reserved: 90,
                transferable: {
