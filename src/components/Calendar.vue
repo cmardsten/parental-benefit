@@ -4,6 +4,7 @@ import { Child } from '../Child';
 import { ParentalLeaveDays } from '../ParentalLeaveDays';
 import DayPopup from './DayPopup.vue';
 import ParentSettings from './ParentSettings.vue';
+import ChildrenSettings from './ChildrenSettings.vue';
 import { useI18n } from 'vue-i18n';
 
 const { t, locale } = useI18n();
@@ -11,10 +12,6 @@ const { t, locale } = useI18n();
 const activeTab = ref('pattern');
 
 const today = new Date();
-const newChild = ref({ name: "", birthdate: new Date().toISOString().substring(0, 10) });
-const editChildren = ref(-1);
-const adjustedDays = ref(null);
-const adjustedDoubleDays = ref(null);
 
 const parents = ref([]);
 const selectedParent = ref(null);
@@ -67,22 +64,6 @@ const monthPay = computed(() => {
 
   return pay;
 });
-
-// Computed property to calculate remaining days for each child
-const childrenWithRemainingDays = computed(() =>
-   children.value.map(child => {
-      return {
-         ...child,
-         tuplet: child.tuplet,
-         remainingDays: {
-            high: child.parentalLeaveDays.getTotalHighLevelDaysLeft(),
-            low: child.parentalLeaveDays.getTotalLowLevelDaysLeft(),
-            double: child.parentalLeaveDays.getDoubleDaysLeft(),
-            doubleDaysExpiration: child.getDoubleDaysExpiryDate().toISOString().substring(0, 10),
-         },
-      };
-   })
-);
 
 const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 var pattern = ref({
@@ -375,12 +356,12 @@ const clearCalendar = () => {
    }
 }
 
-const addChild = () => {
+const addChild = (name, birthdate) => {
    let tuplets = false;
    children.value.forEach(child => {
       // This logic will only work as long as all tuplets are the same child object.
-      if (child.birthdate == newChild.value.birthdate) {
-         child.tupletify(newChild.value.name);
+      if (child.birthdate == birthdate) {
+         child.tupletify(name);
          tuplets = true;
       }
    });
@@ -394,7 +375,8 @@ const addChild = () => {
       // Add new child
       const parentIds = parents.value.map(parent => parent.id);
       const parentalLeaveDays = new ParentalLeaveDays(parentIds);
-      children.value.push(new Child(newChild.value.name, newChild.value.birthdate, highestId + 1, 1, parentalLeaveDays));
+      console.log(parentalLeaveDays);
+      children.value.push(new Child(name, birthdate, highestId + 1, 1, parentalLeaveDays));
    }
    if (!selectedChild.value) {
       selectedChild.value = children.value[0];
@@ -407,25 +389,16 @@ const removeChild = (id) => {
    if (childIndex > -1) {
       children.value.splice(childIndex, 1);
    }
-   editChildren.value = -1;
    if (children.value.length > 0) {
       selectedChild.value = children.value[0]
    }
    saveChildren();
 }
 
-const editChild = (id) => {
+const updateChild = (id, adjustedDays, adjustedDoubleDays) => {
    const child = children.value.find(child => child.id === id)
-   adjustedDays.value = child.parentalLeaveDays.getAllDays();
-   adjustedDoubleDays.value = child.parentalLeaveDays.getDoubleDaysLeft();
-   editChildren.value = id;
-}
-
-const updateChild = (id) => {
-   const child = children.value.find(child => child.id === id)
-   child.parentalLeaveDays.setAllDays(adjustedDays.value);
-   child.parentalLeaveDays.setDoubleDaysLeft(adjustedDoubleDays.value);
-   editChildren.value = - 1
+   child.parentalLeaveDays.setAllDays(adjustedDays);
+   child.parentalLeaveDays.setDoubleDaysLeft(adjustedDoubleDays);
    saveChildren();
 }
 
@@ -446,11 +419,6 @@ const updateParent = (id, newName, newSalary) => {
    parent.name = newName;
    parent.salary = newSalary;
    saveParents();
-}
-
-const getParentNameFromId = (id) => {
-   const parent = parents.value.find(p => p.id == id);
-   return parent.name
 }
 
 const removeParent = (id) => {
@@ -756,59 +724,13 @@ onMounted(() => {
          </div>
 
          <!-- Children tab -->
-         <div v-if="activeTab === 'child'">
-            <h2>{{ $t('children') }}</h2>
-            <div v-if=children>
-               <div v-for="child in childrenWithRemainingDays" :key="child.name">
-                  <h4>{{ child.birthdate }} : {{ child.name }}</h4>
-                  <p>{{ $t('daysLeftOn') }}:</p>
-                  <div v-if="editChildren == child.id">
-                     <p>{{ $t('sicknessBenefitLevel') }}:</p>
-                     <div v-for="parent in adjustedDays" :key="parent.parentId">
-                        <label>{{ getParentNameFromId(parent.parentId) }}</label>
-                        <input type="number" v-model="parent.high" />
-                     </div>
-                  </div>
-                  <p v-else>{{ $t('sicknessBenefitLevel') }}: {{ child.remainingDays.high }}</p>
-                  <div v-if="editChildren == child.id">
-                     <p>{{ $t('minimumLevel') }}:</p>
-                     <div v-for="parent in adjustedDays" :key="parent.parentId">
-                        <label>{{ getParentNameFromId(parent.parentId) }}</label>
-                        <input type="number" v-model="parent.low" />
-                     </div>
-                  </div>
-                  <p v-else>{{ $t('minimumLevel') }}: {{ child.remainingDays.low }}</p>
-                  <div v-if="child.tuplet == 1">
-                     <p> {{ $t('doubleDaysLeft') }}:</p>
-                     <div v-if="editChildren == child.id">
-                        <input type="number" v-model="adjustedDoubleDays" />
-                     </div>
-                     <p v-else>{{ child.remainingDays.double }} ({{ $t('validTo') }} {{
-                        child.remainingDays.doubleDaysExpiration
-                     }})</p>
-                  </div>
-                  <div>
-                     <button v-if="editChildren == child.id" @click="updateChild(child.id)">{{ $t('OK') }}</button>
-                     <button v-if="editChildren == child.id" @click="removeChild(child.id)">{{ $t('removeChild')
-                        }}</button>
-                     <button v-else @click="editChild(child.id)">{{ $t('edit') }}</button>
-                  </div>
-               </div>
-            </div>
-            <div v-if="parents.length > 0">
-               <h3>{{ $t('addChild') }}</h3>
-               <label for="childName">{{ $t('name') }}:</label>
-               <input type="text" v-model="newChild.name" placeholder="Enter child's name" />
-
-               <label for="birthdate">{{ $t('birthdate') }}:</label>
-               <input type="date" v-model="newChild.birthdate" />
-
-               <button @click="addChild">{{ $t('add') }}</button>
-            </div>
-            <div v-else>
-               <p>{{ $t('parentsHaveToBeAddedFirst') }}</p>
-            </div>
-         </div>
+         <ChildrenSettings v-if="activeTab === 'child'"
+         :children=children
+         :parents=parents 
+         @updateChild="(id, adjustedDays, adjustedDoubleDays) => updateChild(id, adjustedDays, adjustedDoubleDays)"
+         @removeChild="(id) => removeChild(id)"
+         @addChild="(name, birthdate) => addChild(name, birthdate)"
+         />
 
          <!-- Parents tab -->
          <ParentSettings v-if="activeTab === 'parents'"
