@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { Child } from '../Child';
 import { ParentalLeaveDays } from '../ParentalLeaveDays';
 import DayPopup from './DayPopup.vue';
+import ParentSettings from './ParentSettings.vue';
 import { useI18n } from 'vue-i18n';
 
 const { t, locale } = useI18n();
@@ -11,9 +12,7 @@ const activeTab = ref('pattern');
 
 const today = new Date();
 const newChild = ref({ name: "", birthdate: new Date().toISOString().substring(0, 10) });
-const newParent = ref({ name: "", salary: 0 });
 const editChildren = ref(-1);
-const editParents = ref(-1);
 const adjustedDays = ref(null);
 const adjustedDoubleDays = ref(null);
 
@@ -430,21 +429,22 @@ const updateChild = (id) => {
    saveChildren();
 }
 
-const addParent = () => {
+const addParent = (name, salary) => {
    let highestId = -1;
    parents.value.forEach(parent => {
       if (parent.id > highestId) {
          highestId = parent.id;
       }
    });
-   parents.value.push({ ...newParent.value, id: highestId + 1 });
-   newParent.value = { name: '', salary: 0 }; // Reset new parent
+   parents.value.push({name: name, salary: salary, id: highestId + 1 });
    selectedParent.value = parents.value[0];
    saveParents();
 }
 
-const updateParent = () => {
-   editParents.value = - 1;
+const updateParent = (id, newName, newSalary) => {
+   const parent = parents.value.find(p => p.id == id);
+   parent.name = newName;
+   parent.salary = newSalary;
    saveParents();
 }
 
@@ -458,7 +458,6 @@ const removeParent = (id) => {
    if (parentIndex > -1) {
       parents.value.splice(parentIndex, 1);
    }
-   editParents.value = -1;
    if (parents.value.length > 0) {
       selectedParent.value = parents.value[0]
    }
@@ -655,8 +654,9 @@ onMounted(() => {
             </select>
          </div>
 
+         <div class="settings-form">
          <!-- Generate pattern tab -->
-         <div v-if="activeTab === 'pattern'" class="settings-form">
+         <div v-if="activeTab === 'pattern'">
             <form v-if="children.length > 0 && parents.length > 0" @submit.prevent>
                <div>
                </div>
@@ -724,7 +724,7 @@ onMounted(() => {
             </div>
          </div>
          <!-- Remove leave tab -->
-         <div v-if="activeTab === 'removeLeave'" class="settings-form">
+         <div v-if="activeTab === 'removeLeave'">
             <h2>{{ $t('removeLeave') }}</h2>
             <form @submit.prevent="removeEventsInRange">
                <tr>
@@ -756,7 +756,7 @@ onMounted(() => {
          </div>
 
          <!-- Children tab -->
-         <div v-if="activeTab === 'child'" class="settings-form">
+         <div v-if="activeTab === 'child'">
             <h2>{{ $t('children') }}</h2>
             <div v-if=children>
                <div v-for="child in childrenWithRemainingDays" :key="child.name">
@@ -811,40 +811,12 @@ onMounted(() => {
          </div>
 
          <!-- Parents tab -->
-         <div v-if="activeTab === 'parents'" class="settings-form">
-            <h2>{{ $t('parents') }}</h2>
-            <div v-if=parents>
-               <div v-for="parent in parents" :key="parent.id">
-                  <div v-if="editParents == parent.id">
-                     <div>
-                        <label for="parentName">{{ $t('name') }}:</label>
-                        <input type="text" v-model="parent.name" placeholder="Enter parent's name" />
-                     </div>
-                     <div>
-                        <label for="salary">{{ $t('monthlySalary') }}:</label>
-                        <input type="number" v-model="parent.salary" min=0 placeholder="Enter parent's monthly salary"
-                           value= />
-                     </div>
-                     <button @click="updateParent()">{{ $t('OK') }}</button>
-                     <button @click="removeParent(parent.id)">{{ $t('remove') }}</button>
-                  </div>
-                  <div v-else>
-                     <h4>{{ $t('parent') }}: {{ parent.name }}</h4>
-                     <p>{{ $t('monthlySalary') }}: {{ parent.salary }}</p>
-                     <button @click="editParents = parent.id">{{ $t('edit') }}</button>
-                  </div>
-               </div>
-            </div>
-            <h3>{{ $t('addParent') }}</h3>
-            <div>
-               <label for="parentName">{{ $t('name') }}:</label>
-               <input type="text" v-model="newParent.name" placeholder="Enter parent's name" />
-            </div>
-            <div>
-               <label for="salary">{{ $t('monthlySalary') }}:</label>
-               <input type="number" v-model="newParent.salary" min=0 placeholder="Enter parent's monthly salary" />
-            </div>
-            <button @click="addParent()">{{ $t('add') }}</button>
+         <ParentSettings v-if="activeTab === 'parents'"
+         :parents=parents
+         @updateParent="(id, newName, newSalary) => updateParent(id, newName, newSalary)"
+         @removeParent="(id) => removeParent(id)"
+         @addParent="(name, salary) => addParent(name, salary)"
+         />
          </div>
       </div>
 
