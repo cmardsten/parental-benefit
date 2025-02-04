@@ -544,9 +544,12 @@ const onDayMouseLeave = () => {
 }
 
 const hidePopup = () => {
-   popupState.value.currentElement.setAttribute("style", popupState.value.oldStyle);
-   popupState.value.disableHide = false;
-   popupState.value.visible = false;
+   if (popupState.value.visible)
+   {
+      popupState.value.currentElement.setAttribute("style", popupState.value.oldStyle);
+      popupState.value.disableHide = false;
+      popupState.value.visible = false;
+   }
 };
 
 const deleteAllData = () => {
