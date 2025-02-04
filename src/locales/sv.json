@@ -44,7 +44,7 @@
    "validationFailedDoubleDayAfter15Months": "Validering misslyckades: Den andra föräldern har redan en schemalagd föräldradag {currentDateString} för {childname}. Dubbeldagar är inte tillåtet när barnet är över 15 månader. Vänligen justera datum och försök igen.",
    "validationFailedOutOfDoubleDays": "Validering misslyckades: {missingDays} ytterligare dubbeldagar krävs. Vänligen justera datum och försök igen.",
    "validationFailedOutOfMinimumLevelDays": "Validering misslyckades: {missingDays} ytterligare dagar på lägstanivå krävs. Vänligen justera datum eller överför dagar och försök igen.",
-   "validationFailedOutOfSicknessBenefitLevelDays": "Validering misslyckades: {missingDays} ytterligare dagara på sjukpenningnivå krävs. Vänligen justera datum eller överför dagar och försök igen.",
+   "validationFailedOutOfSicknessBenefitLevelDays": "Validering misslyckades: {missingDays} ytterligare dagar på sjukpenningnivå krävs. Vänligen justera datum eller överför dagar och försök igen.",
    "year": "År",
    "language": "Språk",
    "total": "Totalt",
