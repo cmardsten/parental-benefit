@@ -549,6 +549,18 @@ const hidePopup = () => {
    popupState.value.visible = false;
 };
 
+const deleteAllData = () => {
+   if (confirm("Warning: This will permanently delete all your data from the application. Are you sure you want to proceed?"))
+   {
+      children.value = [];
+      parents.value = [];
+      events.value = [];
+      localStorage.removeItem("savedChildren");
+      localStorage.removeItem("savedParents");
+      localStorage.removeItem("savedEvents");
+   }
+}
+
 // Load events automatically when the component is mounted
 onMounted(() => {
    loadParents();
@@ -745,6 +757,9 @@ onMounted(() => {
                <option value='sv'>Svenska</option>
                <option value='en'>English</option>
             </select>
+         <br>
+         <label>Delete all my data</label>
+         <button @click="deleteAllData()">Delete</button>
          </div>
       </div>
       </div>
