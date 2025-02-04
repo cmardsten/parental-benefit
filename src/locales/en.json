@@ -52,5 +52,7 @@
    "noParentSelected": "No parent selected.",
    "eventsBetweenStartAndEndHasBeenRemovedForParents": "Leave between {start} and {end} has been removed for: {parents}",
    " and ": " and ",
-   "parentsHaveToBeAddedFirst": "Parents has to be added before children."
+   "parentsHaveToBeAddedFirst": "Parents has to be added before children.",
+   "validationFailedMinimumLevelDaysTransferRequired": "Validation failed: {diff} more days on minium level is required. Do you want to transfer the required days from the other parent and continue the operation?",
+   "validationFailedSicknessBenefitLevelDaysTransferRequired": "Validation failed: {diff} more days on sickness benefit level is required. Do you want to transfer the required days from the other parent and continue the operation?"
 }

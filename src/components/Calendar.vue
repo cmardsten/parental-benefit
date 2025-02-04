@@ -201,14 +201,46 @@ const generatePattern = () => {
       alert(t('validationFailedOutOfDoubleDays', { missingDays: diff }));
    }
    if (lowLevelDays > child.parentalLeaveDays.getLowLevelDaysLeft(parent.id)) {
-      validationFailed = true;
-      const diff = lowLevelDays - child.parentalLeaveDays.getLowLevelDaysLeft(parent.id)
-      alert(t('validationFailedOutOfMinimumLevelDays', { missingDays: diff }));
+      const diff = lowLevelDays - child.parentalLeaveDays.getLowLevelDaysLeft(parent.id);
+      const otherParentId = child.parentalLeaveDays.getOtherParentId(parent.id);
+      const otherParentsLowLevelDays = child.parentalLeaveDays.getTransferableLowLevelDaysLeft(otherParentId);
+      if (otherParentsLowLevelDays >= diff)
+      {
+         if (confirm(t('validationFailedMinimumLevelDaysTransferRequired', {diff: diff})))
+         {
+            child.parentalLeaveDays.transferLowLevelDays(otherParentId, parent.id, diff);
+         }
+         else
+         {
+            validationFailed = true;
+         }
+      }
+      else
+      {
+         alert(t('validationFailedOutOfMinimumLevelDays', { missingDays: diff }));
+         validationFailed = true;
+      }
    }
    if (highLevelDays > child.parentalLeaveDays.getHighLevelDaysLeft(parent.id)) {
       const diff = highLevelDays - child.parentalLeaveDays.getHighLevelDaysLeft(parent.id);
-      alert(t('validationFailedOutOfSicknessBenefitLevelDays', { missingDays: diff }));
-      validationFailed = true;
+      const otherParentId = child.parentalLeaveDays.getOtherParentId(parent.id);
+      const otherParentsHighLevelDays = child.parentalLeaveDays.getTransferableHighLevelDaysLeft(otherParentId);
+      if (otherParentsHighLevelDays >= diff)
+      {
+         if (confirm(t('validationFailedSicknessBenefitLevelDaysTransferRequired', {diff: diff})))
+         {
+            child.parentalLeaveDays.transferHighLevelDays(otherParentId, parent.id, diff);
+         }
+         else
+         {
+            validationFailed = true;
+         }
+      }
+      else
+      {
+         alert(t('validationFailedOutOfSicknessBenefitLevelDays', { missingDays: diff }));
+         validationFailed = true;
+      }
    }
    if (validationFailed) {
       return;

@@ -52,5 +52,7 @@
    "noParentSelected": "Ingen förälder är vald.",
    "eventsBetweenStartAndEndHasBeenRemovedForParents": "Ledighet mellan {start} och {end} har tagits bort för: {parents}",
    " and ": " och ",
-   "parentsHaveToBeAddedFirst": "Föräldrar måste läggas till före barn."
+   "parentsHaveToBeAddedFirst": "Föräldrar måste läggas till före barn.",
+   "validationFailedMinimumLevelDaysTransferRequired": "Validering misslyckades: {diff} ytterligare dagar på lägstanivå krävs. Vill du överföra dagarna från den andra föräldern och fortsätta schemaläggningen?",
+   "validationFailedSicknessBenefitLevelDaysTransferRequired": "Validering misslyckades: {diff} ytterligare dagar på lägstanivå krävs. Vill du överföra dagarna från den andra föräldern och fortsätta schemaläggningen?"
 }

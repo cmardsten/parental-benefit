@@ -141,6 +141,63 @@ class ParentalLeaveDays {
       return days;
    }
 
+   getTransferableHighLevelDaysLeft(parentId)
+   {
+      let days = 0;
+      if (parentId in this.days)
+      {
+         days = this.days[parentId].transferable.high;
+      }
+      return days;
+   }
+
+   getTransferableLowLevelDaysLeft(parentId)
+   {
+      let days = 0;
+      if (parentId in this.days)
+      {
+         days = this.days[parentId].transferable.low;
+      }
+      return days;
+   }
+
+   getOtherParentId(parentId)
+   {
+      var otherParentId = null;
+      if (this.parentIds.length == 2)
+      {
+         if (this.parentIds[0] == parentId)
+         {
+            otherParentId = this.parentIds[1];
+         }
+         else if (this.parentIds[1] == parentId)
+         {
+            otherParentId = this.parentIds[0]
+         }
+      }
+      return otherParentId;
+   }
+
+   transferHighLevelDays(fromParentId, toParentId, days)
+   {
+      if (days > this.days[fromParentId].transferable.high)
+      {
+         throw new Error('Not enough high level days to transfer.')
+      }
+      this.days[fromParentId].transferable.high -= days;
+      this.days[toParentId].transferable.high += days;
+   }
+
+   transferLowLevelDays(fromParentId, toParentId, days)
+   {
+      if (days > this.days[fromParentId].transferable.low)
+      {
+         throw new Error('Not enough low level days to transfer.')
+      }
+      this.days[fromParentId].transferable.low -= days;
+      this.days[toParentId].transferable.low += days;
+   }
+
    getInitialTransferableHighLevelDays() {
       const extraDays = (this.tuplet - 1) * 45;
       return 105 + extraDays;
